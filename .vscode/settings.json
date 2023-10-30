@@ -1,0 +1,13 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "eslint.validate": [ "typescriptreact" ],
+  "files.exclude": {
+    "**/.vscode": true,
+    "**/node_modules": true,
+    //"**/dist": true,
+    "**/package-lock.json": false,
+    "**/yarn.lock": true,
+  },
+}

@@ -1,0 +1,7 @@
+.gitignore
+.git
+src/
+tsconfig.json
+webpack.config.js
+.eslintrc.json
+.vscode/

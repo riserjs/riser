@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"target": "ESNext",
+		"module": "ESNext",
+		"moduleResolution": "Node",
+		"esModuleInterop": true,
+		"jsx": "react",
+		"jsxFactory": "global.jsx",
+		"jsxFragmentFactory": "global.jsx.Fragment",
+		"allowJs": true,
+		"checkJs": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"strictPropertyInitialization": false,
+		"experimentalDecorators": true,
+    "emitDecoratorMetadata": true
+	}
+}
