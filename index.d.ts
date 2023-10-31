@@ -9,7 +9,7 @@ declare global {
   var publish: any
 }
 
-declare module 'quartzjs' {
+declare module 'riser' {
   export function Gateway( path: string )
   export function Request( path: string )
   export interface Response { path: string, message: any }

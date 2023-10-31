@@ -93,9 +93,10 @@ const myplugin = ( { types: t }: any ) => {
 				for ( let a in attributes ) {
 					const { name: { name }, value: { expression } } = attributes[ a ]
 					if ( !name.startsWith( 'on' ) && expression?.type === 'MemberExpression' && expression?.object.type === 'ThisExpression' ) {
-						const name = getName( expression )
+						let props = trvr( expression )
 						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-						attributes.push( save( name, expression, uid, 'attributes', name ) )
+						//attributes.push( save( name, expression, uid, 'attributes', name ) )
+						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'children', name ) ) )
 					}
 				}
 
@@ -120,8 +121,8 @@ const fConfig: any = {
 	entry: {
 		index: [
 			'./node_modules/webpack-hot-middleware/client?reload=true&timeout=1000',
-			'./node_modules/quartzjs/dist/frontend/loader',
-			'./node_modules/quartzjs/dist/frontend/runtime',
+			'./node_modules/riser/dist/frontend/loader',
+			'./node_modules/riser/dist/frontend/runtime',
 		]
 	},
 	output: {
@@ -191,7 +192,7 @@ const fConfig: any = {
 		]
 	},
 	plugins: [
-		new HtmlWebpackPlugin( { template: './node_modules/quartzjs/index.html', inject: false } ),
+		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false } ),
 		new webpack.HotModuleReplacementPlugin(),
 		new webpack.ProvidePlugin( { process: 'process/browser' } ),
 		new webpack.ProvidePlugin( { Buffer: [ 'buffer', 'Buffer' ] } ),
@@ -203,8 +204,8 @@ const bConfig: any = {
 	entry: {
 		main: [
 			'./node_modules/webpack/hot/poll?1000',
-			'./node_modules/quartzjs/dist/backend/loader',
-			'./node_modules/quartzjs/dist/backend/runtime',
+			'./node_modules/riser/dist/backend/loader',
+			'./node_modules/riser/dist/backend/runtime',
 		]
 	},
 	target: 'node',
