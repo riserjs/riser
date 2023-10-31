@@ -54,7 +54,7 @@
 
 ```typescript
 // home.view.tsx
-import { View, Navigator, Request } from 'quartzjs'
+import { View, Navigator, Request } from 'riser'
 import { ButtonComponent } from './button.component'
 
 @View( '/' )
@@ -75,7 +75,7 @@ export class HomeView {
 
 ```typescript
 // message.view.tsx
-import { View, Navigate, Parameter } from 'quartzjs'
+import { View, Navigate, Parameter } from 'riser'
 import { ButtonComponent } from './button.component'
 import { ChatComponent } from './chat.component'
 
@@ -105,7 +105,7 @@ export class MessageView {
 
 ```typescript
 // chat.component.tsx
-import { Component, State, Receptor, Emitter } from 'quartzjs'
+import { Component, State, Receptor, Emitter } from 'riser'
 
 @Component()
 export class ChatComponent {
@@ -153,7 +153,7 @@ export class ChatComponent {
 
 ```typescript
 // button.component.tsx
-import { Component, Property } from 'quartzjs'
+import { Component, Property } from 'riser'
 
 @Component()
 export class ButtonComponent {
@@ -180,7 +180,7 @@ export class ButtonComponent {
 
 ```typescript
 // user.gateway.ts
-import { Gateway, Request, Reaponse } from 'quartzjs'
+import { Gateway, Request, Reaponse } from 'riser'
 
 @Gateway( '/user' )
 export class UserGateway {
@@ -195,7 +195,7 @@ export class UserGateway {
 
 ```typescript
 // message.gateway.ts
-import { Gateway, Request, Broadcast, Logger, Expose } from 'quartzjs'
+import { Gateway, Request, Broadcast, Logger, Expose } from 'riser'
 
 @Gateway( '/message' )
 export class MessageGateway {
@@ -215,7 +215,7 @@ export class MessageGateway {
 
 ```typescript
 // mongodb.database.ts
-import { Database, Initiate } from 'quartzjs'
+import { Database, Initiate } from 'riser'
 
 @Database( )
 export class MongodbDatabase {
@@ -232,7 +232,7 @@ export class MongodbDatabase {
 
 ```typescript
 // authorization.guard.ts
-import { Guard, Intercept, Logger } from 'quartzjs'
+import { Guard, Intercept, Logger } from 'riser'
 
 @Guard( )
 export class AuthorizationGuard {
@@ -245,7 +245,3 @@ export class AuthorizationGuard {
 
 }
 ```
-
-
-
-
