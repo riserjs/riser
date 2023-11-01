@@ -1,4 +1,4 @@
-### A decentralized framework for developing frontend and/or backend realtime applications
+### A decentralized framework to develop realtime frontend and/or backend applications
 - Incoming events path listen on .view.tsx .gateway.ts file types declaration.
 - No directory structure is required.
 - No main file is required.
@@ -8,7 +8,7 @@
 ### Frontend
 #### View
 - View decorator path route and auto instance
-- Parameter decorator for extract url parameter
+- Parameter decorator to extract url parameter
 
 #### Component
 - Method auto binding

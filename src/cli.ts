@@ -9,9 +9,13 @@ const trvr = ( target: any ) => {
 	let props: any = []
   for ( let key in target ) {
 		if ( target[ key ]?.type == 'ThisExpression' ) {
-			props.push( target.property.name )
+			if ( !props.includes( target.property.name && !target.property.name.startsWith( 'on' ) ) ) props.push( target.property.name )
+		} else if ( key == 'expressions' ) {
+			for ( let i in target[ key ] ) {
+				for ( let e of trvr( target[ key ][ i ] ) ) if ( !props.includes( e ) && !e.startsWith( 'on' ) ) props.push( e )
+			}
 		} else if ( typeof target[ key ] === 'object' ) {
-			props = [ ...props, ...trvr( target[ key ] ) ]
+			for ( let i of trvr( target[ key ] ) ) if ( !props.includes( i ) && !i.startsWith( 'on' ) ) props.push( i )
     }
   }
 	return props
@@ -50,56 +54,58 @@ const myplugin = ( { types: t }: any ) => {
 					t.jSXElement( t.jSXOpeningElement( t.jSXIdentifier( 'div' ), [] ), t.jSXClosingElement( t.jSXIdentifier( 'div' ) ), path.node.children )
 				)
 			},
-			JSXExpressionContainer( path: any ) {
-				const { expression } = path.node
-				const uid = random()
-				if ( expression.type == 'CallExpression' && expression.callee.type == 'MemberExpression' && expression.callee.object.type == 'MemberExpression' && expression.callee.property.name == 'map' ) {
-					expression.arguments[ 0 ].body.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-					path.parent.openingElement.attributes.push( save( expression.callee.object.property.name, expression, uid, 'iteration', 0 ) )
-				} else if ( expression.type == 'ConditionalExpression' && expression.test.type == 'MemberExpression' && expression.test.object.type == 'ThisExpression' ) {
-					expression.consequent.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-					expression.alternate.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-					path.parent.openingElement.attributes.push( save( expression.test.property.name, expression, uid, 'condition', 0 ) )
-				}
-			},
 			JSXElement( path: any ) {
 				const { openingElement: { attributes }, children } = path.node
 				const uid = random()
 
-				for ( let i in children ) {
-					const { type, value } = children[ i ]
-					if ( type == 'JSXText' && [ '\n', '\t', ' ' ].includes( value[ 0 ] ) ) children.splice( i, 1 )
-				}
-
-				for ( let i in children ) {
-					const { type, expression } = children[ i ]
+				for ( let a in attributes ) {
+					const { name: { name }, value: { type, expression } } = attributes[ a ]
+					if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
 					let props: any = []
-					if ( type != 'JSXExpressionContainer' ) continue
-					if ( expression?.type === 'MemberExpression' ) {
+					if ( expression?.type == 'MemberExpression' ) {
 						props = trvr( expression )
-					} else if ( expression?.type === 'TemplateLiteral' ) {
+					} else if ( expression?.type == 'TemplateLiteral' ) {
 						for ( let i in expression.expressions ) props = [ ...props, ...trvr( expression.expressions[ i ] ) ]
-					} else if ( expression?.type === 'LogicalExpression' ) {
-						props = [ ...trvr( expression.left ), ...trvr( expression.right ) ]
-					} else if ( expression?.type == 'ConditionalExpression' ) {
-						props = [ ...trvr( expression.test.left ), ...trvr( expression.test.right ) ]
 					}
 					if ( props.length > 0 ) {
 						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'children', i ) ) )
-					}
-				}
-	
-				for ( let a in attributes ) {
-					const { name: { name }, value: { expression } } = attributes[ a ]
-					if ( !name.startsWith( 'on' ) && expression?.type === 'MemberExpression' && expression?.object.type === 'ThisExpression' ) {
-						let props = trvr( expression )
-						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-						//attributes.push( save( name, expression, uid, 'attributes', name ) )
-						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'children', name ) ) )
+						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'attributes', name ) ) )
 					}
 				}
 
+				for ( let c in children ) {
+					const { type, value } = children[ c ]
+					if ( type == 'JSXText' && [ '\n', '\t', ' ' ].includes( value[ 0 ] ) ) children.splice( c, 1 )
+				}
+
+				for ( let c in children ) {
+					const { type, expression } = children[ c ]
+					let props: any = []
+					if ( type != 'JSXExpressionContainer' ) continue
+					if ( expression?.type == 'CallExpression' && expression?.arguments[ 0 ].type == 'ArrowFunctionExpression' && expression?.callee.property.name == 'map' ) {
+						//props = trvr( expression )
+						const r = random()
+						expression.arguments[ 0 ].body.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
+						trvr( expression ).map( ( p: string ) => attributes.push( save( p, expression, r, 'iteration', r ) ) )
+						console.log('iteration',trvr( expression ))
+					} else if ( expression?.type == 'MemberExpression' ) {
+						props = trvr( expression )
+					} else if ( expression?.type == 'TemplateLiteral' ) {
+						props = trvr( expression )
+					} else if ( expression?.type == 'LogicalExpression' ) {
+						props = trvr( expression )
+					} else if ( expression?.type == 'ConditionalExpression' ) {
+						const r = random()
+						expression.consequent.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
+						expression.alternate.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
+						trvr( expression ).map( ( p: string ) => attributes.push( save( p, expression, r, 'condition', r ) ) )
+						console.log('condition',trvr( expression ))
+					}
+					if ( props.length > 0 ) {
+						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
+						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'children', Number( c ) ) ) )
+					}
+				}
 			}
 		}
 	}

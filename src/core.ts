@@ -1,38 +1,48 @@
 const update = ( elements: any ) => {
 	for ( let id in elements ) {
-		const { attributes, children, condition, iteration } = elements[ id ]
 		const element: any = document.querySelectorAll( `[${id}]` )
+		if ( element.length == 0 ) continue
 
-		console.log(element)
-		if ( element.length == 0 ) return
+		for ( let type in elements[ id ] ) {
+			if ( type == 'iteration' ) {
 
-		for ( let name in attributes ) element[ 0 ].setAttribute( name, attributes[ name ]() )
-		for ( let index in children ) {
-			if ( !element[ 0 ].childNodes[ index ].nodeValue ) {
-				element[ 0 ].childNodes[ index ].replaceWith( children[ index ]() )
-			} else {
-				element[ 0 ].childNodes[ index ].nodeValue = children[ index ]() 
-			}
-		}
+				for ( let index in elements[ id ][ type ] ) {
+					const parent = element[ 0 ].parentNode
+					const prev = element[ 0 ].previousElementSibling
+					const next = element[ element.length - 1 ].nextElementSibling
+					for ( let e of element ) parent.removeChild( e )
+					const els = elements[ id ][ type ][ index ]()
+					if ( prev ) {
+						for ( let e of els.reverse() ) parent.insertBefore( e, prev.nextSibling )
+					} else if ( next ) {
+						for ( let e of els ) parent.insertBefore( e, next )
+					} else {
+						for ( let e of els ) parent.appendChild( e )
+					}
+				}
 
-		for ( let index in condition ) element[ 0 ].replaceWith( condition[ index ]() )
-		if ( iteration ) {
-			const parent = element[ 0 ].parentNode
-			const prev = element[ 0 ].previousElementSibling
-			const next = element[ element.length - 1 ].nextElementSibling
+			} else if ( type == 'attributes' ) {
 
-			for ( let e of element ) parent.removeChild( e )
-			const els = iteration[ 0 ]()
-			if ( prev ) {
-				for ( let e of els.reverse() ) parent.insertBefore( e, prev.nextSibling )
-			} else if ( next ) {
-				for ( let e of els ) parent.insertBefore( e, next )
-			} else {
-				for ( let e of els ) parent.appendChild( e )
+				for ( let name in elements[ id ][ type ] ) element[ 0 ].setAttribute( name, elements[ id ][ type ][ name ]() )
+
+			} else if ( type == 'children' ) {
+
+				for ( let index in elements[ id ][ type ] ) {
+					if ( !element[ 0 ].childNodes[ index ].nodeValue ) {
+						element[ 0 ].childNodes[ index ].replaceWith( elements[ id ][ type ][ index ]() )
+					} else {
+						element[ 0 ].childNodes[ index ].nodeValue = elements[ id ][ type ][ index ]() 
+					}
+				}
+				
+			} else if ( type == 'condition' ) {
+
+				for ( let index in elements[ id ][ type ] ) element[ 0 ].replaceWith( elements[ id ][ type ][ index ]() )
+
 			}
 		}
 	}
-} 
+}
 
 for ( let type of [ String, Number, Boolean, Array, Object ] ) {
 	Object.defineProperty( type.prototype, 'q', {
@@ -45,8 +55,8 @@ for ( let type of [ String, Number, Boolean, Array, Object ] ) {
 	} )
 }
 
-Object.defineProperty( Array.prototype, 'isEmpty', { value: () => Array.prototype.length == 0 ? false : true } )
-Object.defineProperty( Object.prototype, 'isEmpty', { value: () => Object.keys( Object.prototype ).length == 0 ? false : true } )
+//Object.defineProperty( Array.prototype, 'isEmpty', { value: () => Array.prototype.length == 0 ? false : true } )
+//Object.defineProperty( Object.prototype, 'isEmpty', { value: () => Object.keys( Object.prototype ).length == 0 ? false : true } )
 
 export const Gateway = ( path: string ) => {
 	return ( target: any ) => {
@@ -55,7 +65,7 @@ export const Gateway = ( path: string ) => {
 			constructor( ) {
 				super()
 				this.exposes = this.exposes
-				for ( let i in this.__requests__ ) ( global.subscribers ??= {} )[ `${path}${i}` ] = this[ this.__requests__[ i ] ]
+				for ( let i in this.__requests__ ) ( ( global as any ).subscribers ??= {} )[ `${path}${i}` ] = this[ this.__requests__[ i ] ]
 			}
 		}
 	}
