@@ -30,7 +30,7 @@ const myplugin = ( { types: t }: any ) => {
 				t.logicalExpression(
 					'&&',
 					t.memberExpression( t.memberExpression( t.memberExpression( t.thisExpression(), t.identifier( state ) ), t.identifier( 'q' ) ), t.identifier( 'state' ) ),
-					t.optionalCallExpression(
+					t.callExpression(
 						t.memberExpression( t.memberExpression( t.memberExpression( t.thisExpression(), t.identifier( state ) ), t.identifier( 'q' ) ), t.identifier( 'append' ) ),
 						[
 							t.stringLiteral( uid ),
@@ -39,8 +39,7 @@ const myplugin = ( { types: t }: any ) => {
 								t.objectProperty( t.stringLiteral( typeof param === 'string' ? 'name' : 'index' ), typeof param === 'string' ? t.stringLiteral( param ) : t.numericLiteral( param ) ),
 								t.objectProperty( t.identifier( 'value' ), t.arrowFunctionExpression( [], expression, false ) ),
 							] )
-						],
-						true
+						]
 					)
 				)
 			)
@@ -64,7 +63,18 @@ const myplugin = ( { types: t }: any ) => {
 					let props: any = []
 					if ( expression?.type == 'MemberExpression' ) {
 						props = trvr( expression )
-					} else if ( expression?.type == 'TemplateLiteral' ) {
+					}
+					if ( props.length > 0 ) {
+						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
+						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'attributes', name ) ) )
+					}
+				}
+
+				for ( let a in attributes ) {
+					const { name: { name }, value: { type, expression } } = attributes[ a ]
+					if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
+					let props: any = []
+					if ( expression?.type == 'TemplateLiteral' ) {
 						for ( let i in expression.expressions ) props = [ ...props, ...trvr( expression.expressions[ i ] ) ]
 					}
 					if ( props.length > 0 ) {
@@ -83,23 +93,25 @@ const myplugin = ( { types: t }: any ) => {
 					let props: any = []
 					if ( type != 'JSXExpressionContainer' ) continue
 					if ( expression?.type == 'CallExpression' && expression?.arguments[ 0 ].type == 'ArrowFunctionExpression' && expression?.callee.property.name == 'map' ) {
-						//props = trvr( expression )
 						const r = random()
 						expression.arguments[ 0 ].body.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
-						trvr( expression ).map( ( p: string ) => attributes.push( save( p, expression, r, 'iteration', r ) ) )
-						console.log('iteration',trvr( expression ))
+						trvr( expression ).map( ( p: string ) => attributes.push( save( p, expression, r, 'iteration', uid ) ) )
+						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
+						//console.log('iteration', trvr( expression ))
 					} else if ( expression?.type == 'MemberExpression' ) {
+						//console.log('this', trvr( expression ))
 						props = trvr( expression )
 					} else if ( expression?.type == 'TemplateLiteral' ) {
 						props = trvr( expression )
 					} else if ( expression?.type == 'LogicalExpression' ) {
+						//console.log('logical', trvr( expression ))
 						props = trvr( expression )
 					} else if ( expression?.type == 'ConditionalExpression' ) {
 						const r = random()
 						expression.consequent.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
 						expression.alternate.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
 						trvr( expression ).map( ( p: string ) => attributes.push( save( p, expression, r, 'condition', r ) ) )
-						console.log('condition',trvr( expression ))
+						//console.log('condition', trvr( expression ))
 					}
 					if ( props.length > 0 ) {
 						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )

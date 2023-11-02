@@ -1,7 +1,16 @@
 const update = ( elements: any ) => {
 	for ( let id in elements ) {
-		const element: any = document.querySelectorAll( `[${id}]` )
-		if ( element.length == 0 ) continue
+		let element: any = document.querySelectorAll( `[${id}]` )
+
+		if ( element.length == 0 ) {
+			if ( elements[ id ].iteration ) {
+				for ( let type in elements[ id ].iteration ) {
+					element = document.querySelectorAll( `[${type}]` )
+					for ( let e of elements[ id ].iteration[ type ]( ) ) element[ 0 ].appendChild( e )
+				}
+			}
+			continue
+		}
 
 		for ( let type in elements[ id ] ) {
 			if ( type == 'iteration' ) {
@@ -27,13 +36,7 @@ const update = ( elements: any ) => {
 
 			} else if ( type == 'children' ) {
 
-				for ( let index in elements[ id ][ type ] ) {
-					if ( !element[ 0 ].childNodes[ index ].nodeValue ) {
-						element[ 0 ].childNodes[ index ].replaceWith( elements[ id ][ type ][ index ]() )
-					} else {
-						element[ 0 ].childNodes[ index ].nodeValue = elements[ id ][ type ][ index ]() 
-					}
-				}
+				for ( let index in elements[ id ][ type ] ) element[ 0 ].childNodes[ index ].replaceWith( elements[ id ][ type ][ index ]() )				
 				
 			} else if ( type == 'condition' ) {
 
@@ -44,17 +47,14 @@ const update = ( elements: any ) => {
 	}
 }
 
-for ( let type of [ String, Number, Boolean, Array, Object ] ) {
-	Object.defineProperty( type.prototype, 'q', {
-		writable: true, value: {
-			elements: {},
-			state: false,
-			update: () => update( type.prototype.q.elements ),
-			append: ( id: string, t: string, param: any ) => { ( ( type.prototype.q.elements[ id ] ??= {} )[ t ] ??= {} )[ param.name ? param.name : param.index ] = param.value }
-		}
-	} )
-}
+for ( let type of [ String, Number, Boolean, Array, Object ] ) { Object.defineProperty( type.prototype, 'q', { writable: true, value: { elements: { }, state: false, update: ( ) => {}, append: ( ) => {} } } ) }
 
+const define = ( value: any ) => {
+	value.q.elements = {}
+	value.q.state = true
+	value.q.update = ( ) => update( value.q.elements )
+	value.q.append = ( id: string, type: string, param: any ) => { ( ( value.q.elements[ id ] ??= {} )[ type ] ??= {} )[ param.name ? param.name : param.index ] = param.value }
+} 
 //Object.defineProperty( Array.prototype, 'isEmpty', { value: () => Array.prototype.length == 0 ? false : true } )
 //Object.defineProperty( Object.prototype, 'isEmpty', { value: () => Object.keys( Object.prototype ).length == 0 ? false : true } )
 
@@ -78,12 +78,12 @@ export const Request = ( path: string ) => {
 	}
 }
 
-export const Response = ( path: string, message: any ) => {
-	return { path, message }
+export const Response = ( path: string, { client, message }: any ) => {
+	return { path, client, message }
 }
 
 export const Broadcast = ( path: string, data: any ) => {
-	( global as any ).broadcast( path, data )
+	( global as any ).publish( path, data )
 }
 
 export const Database = ( ) => {
@@ -175,22 +175,27 @@ export const Component = () => {
 
 				// DEFINE STATES
 				for ( let key in this.__state__ ) {
-					this[ this.__state__[ key ] ].q.state = true
+
 					if ( this[ this.__state__[ key ] ] instanceof Array ) {
 						
-						const handler = { get: ( target: any, property: string ) => { if ( [ 'push' ].includes( property ) ) { return function( value: any ) { target.push( value ); target.q.update() } } return target[ property ] } }
+						const handler = { get: ( target: any, property: string ) => { if ( [ 'push', 'unshift' ].includes( property ) ) { return function( value: any ) { target.push( value ); target.q.update() } } return target[ property ] } }
 						let value = new Proxy( this[ this.__state__[ key ] ], handler )
+						define( value )
 						Object.defineProperty( this, this.__state__[ key ], { get: () => value, set: ( v: any ) => { value = new Proxy( v, handler ); value.q.update() } } )
 
-					} if ( this[ this.__state__[ key ] ] instanceof Object ) {
+					} else if ( this[ this.__state__[ key ] ] instanceof Object ) {
 
 						const handler = { set: ( target: any, property: any, value: any ) => { target[ property ] = value; target.q.update(); return true } }
 						let value = new Proxy( this[ this.__state__[ key ] ], handler )
+						define( value )
 						Object.defineProperty( this, this.__state__[ key ], { get: () => value, set: ( v: any ) => { value = new Proxy( v, handler ); value.q.update() } } )
 
 					} else if ( [ 'string', 'number', 'boolean' ].includes( typeof this[ this.__state__[ key ] ] ) ) {
+						
 						let value = this[ this.__state__[ key ] ]
+						define( value )
 						Object.defineProperty( this, this.__state__[ key ], { get: () => value, set: ( v: any ) => { value = v; value.q.update() } } )
+					
 					}
 				}
 
@@ -203,7 +208,9 @@ export const Component = () => {
 				}
 
 				// DEFINE PROPERTIES
-				if ( data.attributes ) for ( let key in this.properties ) this[ this.properties[ key ] ] = data.attributes[ this.properties[ key ] ]
+				if ( data.attributes ) for ( let key in this.properties ) {
+					this[ this.properties[ key ] ] = data.attributes[ this.properties[ key ] ]
+				}
 				
 				// RUN INITIATE METHODS
 				for ( let key in this.__initiate__ ) this[ this.__initiate__[ key ] ]( ) 
@@ -257,4 +264,8 @@ export const Property = ( ) => {
 		if ( !target.properties ) target.properties = []
 		target.properties.push( key )
 	}
+}
+
+export const Client = ( value: string ) => {
+	( global as any ).client( value )
 }

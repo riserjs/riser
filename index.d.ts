@@ -12,9 +12,9 @@ declare global {
 declare module 'riser' {
   export function Gateway( path: string )
   export function Request( path: string )
-  export interface Response { path: string, message: any }
-  export function Response ( path: string, message: any )
-  export function Broadcast( path: string, message: any )
+  export interface Response { path: string, data: any }
+  export function Response ( path: string, data: any )
+  export function Broadcast( path: string, data: any )
   export function Database( )
   export function Logger( value?: any )
   export function Guard( )
@@ -29,6 +29,7 @@ declare module 'riser' {
   export function State( )
   export function Parameter( )
   export function Property( )
+  export function Client( value: string )
 }
 
 namespace JSX {

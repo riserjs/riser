@@ -69,19 +69,36 @@ declare var port: number
 
 const network = mqtt.connect( 'ws://localhost:9001' )
 
-const subscribers: any = {}
+let client = localStorage.getItem( 'client' ) ?  localStorage.getItem( 'client' ) : Math.random().toString( 36 ).slice( -9 )
+
+const backup: any = {}
+let subscribers: any = {};
+
+( global as any ).client = ( value: string ) => {
+	if ( localStorage.getItem( 'client' ) == value ) return
+	localStorage.setItem( 'client', value )
+
+	for ( let i in subscribers ) network.unsubscribe( i )
+	subscribers = {}
+
+	for ( let i in backup ) {
+		subscribers[ `${i}-${value}` ] = backup[ i ]
+		network.subscribe( `${i}-${value}` )
+	}
+}
 
 network.on( 'message', ( path: string, message: any ) => {
 	if ( subscribers.hasOwnProperty( path ) ) subscribers[ path ]( JSON.parse( message.toString( ) ) )
 } );
 
 ( global as any ).subscribe = ( path: string, callback: any ) => {
-	subscribers[ path ] = callback
-	network.subscribe( path )
+	backup[ path ] = callback
+	subscribers[ `${path}-${client}` ] = callback
+	network.subscribe( `${path}-${client}` )
 }
 
 ( global as any ).publish = ( path: string, message: any ) => {
-	network.publish( path, JSON.stringify( message ) )
+	network.publish( path, JSON.stringify( { client, message } ) )
 }
 
 window.onpopstate = ( ) => {
