@@ -1,6 +1,6 @@
 {
   "name": "riser",
-  "version": "0.3.18",
+  "version": "0.3.19",
   "description": "A decentralized framework for develop frontend and/or backend realtime applications",
   "main": "index.js",
   "bin": "./dist/cli.js",
