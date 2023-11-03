@@ -2,6 +2,8 @@ import webpack from 'webpack'
 import path from 'path'
 import nodeExternals from 'webpack-node-externals'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
+import webpackDevServer from 'webpack-dev-server' 
+import memfs from 'memfs'
 
 const random = () => 'abcdefghijklmnopqrstuvwxyz'[ Math.floor( Math.random() * 26 ) ] + Math.random().toString( 36 ).slice( -9 )
 
@@ -123,6 +125,9 @@ const myplugin = ( { types: t }: any ) => {
 	}
 }
 
+const flogs = /\.(view|component).(js|jsx|ts|tsx)?$/
+const blogs = /\.(gateway|guard|database).(js|jsx|ts|tsx)?$/
+
 const log = ( regex: RegExp, stats: any ) => {
 	console.log( stats.toString( {
 		colors: true,
@@ -132,31 +137,26 @@ const log = ( regex: RegExp, stats: any ) => {
 }
  
 declare var __non_webpack_require__: any
-declare global { var config: any }
 
 const fConfig: any = {
-	mode: 'development',
-	entry: {
-		index: [
-			'./node_modules/webpack-hot-middleware/client?reload=true&timeout=1000',
+  mode: 'development',
+  entry: {
+    index: [
+			'webpack/hot/dev-server.js',
+			'webpack-dev-server/client/index.js?hot=true&live-reload=true',
 			'./node_modules/riser/dist/frontend/loader',
 			'./node_modules/riser/dist/frontend/runtime',
 		]
-	},
-	output: {
-		path: path.join( __dirname, '../../../dist' ),
-		filename: 'index.js',
-		publicPath: '/',
-		hotUpdateChunkFilename: 'index.[fullhash].hot-update.js',
-		hotUpdateMainFilename: 'index.[fullhash].hot-update.json',
-	},
-	devtool: 'source-map',
+  },
 	stats: {
 		colors: true,
 		assets: false,
-		excludeModules: [ m => !/\.(view|component).(jsx|tsx)?$/.test( m ) ]
+		excludeModules: [ ( m: string ) => !flogs.test( m ) ]
 	},
-	resolve: {
+	infrastructureLogging: { level: 'error' },
+	target: 'web',
+  devtool: 'source-map',
+  resolve: {
 		extensions: [ '.js', '.jsx', '.ts', '.tsx', '.css' ],
 	},
 	module: {
@@ -178,43 +178,22 @@ const fConfig: any = {
 			}
 		},
 		{
-			test: /\.css$/i,
-			use: [ 'style-loader', 'css-loader', 
-				{
-					loader: 'postcss-loader',
-					options: {
-						postcssOptions: {
-							plugins: {
-								tailwindcss: {
-									config: {
-										content: [
-											__dirname + '/../../src/**/*.{view,component}.{jsx,tsx}',
-										],
-										theme: {
-											extend: {},
-										},
-										plugins: [],
-									},
-								}
-							},
-						},
-					},
-				}
-			],
-		},
-		{
 			test: /\.(png|ico)$/,
 			type: 'asset/resource',
-			generator: { filename: 'assets/[name][ext]', },
+			generator: { filename: 'assets/[name][ext]' },
 		},
 		]
 	},
-	plugins: [
+  plugins: [
 		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false } ),
 		new webpack.HotModuleReplacementPlugin(),
 		new webpack.ProvidePlugin( { process: 'process/browser' } ),
 		new webpack.ProvidePlugin( { Buffer: [ 'buffer', 'Buffer' ] } ),
-	]
+  ],
+  output: {
+    filename: 'index.js',
+    path: path.resolve( __dirname, 'dist' )
+  },
 }
 
 const bConfig: any = {
@@ -263,18 +242,25 @@ const bConfig: any = {
 	]
 }	
 
-const flogs = /\.(view|component).(js|jsx|ts|tsx)?$/
-const blogs = /\.(gateway|guard|database).(js|jsx|ts|tsx)?$/
-
 if ( process.argv[ process.argv.length - 1 ] == 'dev' ) {
 	
 	const fCompiler = webpack( fConfig )
-	global.config = fCompiler
 
-	fCompiler.watch( { }, ( err, stats ) => log( flogs, stats ) )
+	new webpackDevServer( { hot: false, client: false, port: 3000, historyApiFallback: true }, fCompiler ).start( )
 
-	const bCompiler = webpack( bConfig )
-	bCompiler.watch( { }, ( err, stats ) => { log( blogs, stats ); __non_webpack_require__( '../../../dist/main' ) } )
+	//fCompiler.watch( { }, ( err, stats ) => log( flogs, stats ) )
+
+	const bCompiler: any = webpack( bConfig )
+	bCompiler.outputFileSystem = memfs
+	bCompiler.watch( { }, ( err: any, stats: any ) => { log( blogs, stats ); eval(bCompiler.outputFileSystem.readFileSync(`${bConfig.output.path}/main.js`).toString()) } )
+
+	//const compiler = webpack( backend )
+	//compiler.outputFileSystem = memfs
+	//compiler.run((err, stats) => {
+		//console.log(stats)
+		//console.log( new Function(compiler.outputFileSystem.readFileSync(`${backend.output.path}/main.js`).toString())() )
+	//});
+	
 
 } else {
 
