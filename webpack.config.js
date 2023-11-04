@@ -77,8 +77,8 @@ const backend = {
 	],
 	plugins: [
 		new CopyPlugin(	{
-      		patterns: [ 'src/backend/loader.js'],
-    	}	)
+			patterns: [ 'src/backend/loader.js'],
+		}	)
 	]
 }
 

@@ -142,8 +142,8 @@ const fConfig: any = {
   mode: 'development',
   entry: {
     index: [
-			'webpack/hot/dev-server.js',
-			'webpack-dev-server/client/index.js?hot=true&live-reload=true',
+			//'webpack/hot/dev-server.js',
+			//'webpack-dev-server/client/index.js?hot=true&live-reload=true',
 			'./node_modules/riser/dist/frontend/loader',
 			'./node_modules/riser/dist/frontend/runtime',
 		]
@@ -167,7 +167,8 @@ const fConfig: any = {
 				loader: 'babel-loader',
 				options: {
 					presets: [
-						'@babel/preset-env', '@babel/typescript',
+						[ '@babel/preset-env' ],
+						[ '@babel/typescript' ],
 						[ '@babel/preset-react', { 'pragma': 'global.jsx.createElement', 'pragmaFrag': 'global.jsx.Fragment' } ]
 					],
 					plugins: [
@@ -186,7 +187,6 @@ const fConfig: any = {
 	},
   plugins: [
 		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false } ),
-		new webpack.HotModuleReplacementPlugin(),
 		new webpack.ProvidePlugin( { process: 'process/browser' } ),
 		new webpack.ProvidePlugin( { Buffer: [ 'buffer', 'Buffer' ] } ),
   ],
@@ -217,7 +217,7 @@ const bConfig: any = {
 		nodeExternals()
 	],
 	resolve: {
-		extensions: [ '.js', '.ts' ],
+		extensions: [ '.js', '.jsx', '.ts', '.tsx' ],
 	},
 	module: {
 		rules: [ { 
@@ -246,21 +246,15 @@ if ( process.argv[ process.argv.length - 1 ] == 'dev' ) {
 	
 	const fCompiler = webpack( fConfig )
 
-	new webpackDevServer( { hot: false, client: false, port: 3000, historyApiFallback: true }, fCompiler ).start( )
-
-	//fCompiler.watch( { }, ( err, stats ) => log( flogs, stats ) )
+	new webpackDevServer( { hot: true, client: { logging: 'none' }, liveReload: true, port: 3000, historyApiFallback: true }, fCompiler ).start( )
 
 	const bCompiler: any = webpack( bConfig )
 	bCompiler.outputFileSystem = memfs
-	bCompiler.watch( { }, ( err: any, stats: any ) => { log( blogs, stats ); eval(bCompiler.outputFileSystem.readFileSync(`${bConfig.output.path}/main.js`).toString()) } )
-
-	//const compiler = webpack( backend )
-	//compiler.outputFileSystem = memfs
-	//compiler.run((err, stats) => {
-		//console.log(stats)
-		//console.log( new Function(compiler.outputFileSystem.readFileSync(`${backend.output.path}/main.js`).toString())() )
-	//});
-	
+	bCompiler.watch( { }, ( err: any, stats: any ) => {
+		log( blogs, stats );
+		if ( ( global as any ).disconnect ) ( global as any ).disconnect()
+		eval(bCompiler.outputFileSystem.readFileSync(`${bConfig.output.path}/main.js`).toString())
+	} )
 
 } else {
 

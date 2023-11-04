@@ -14,5 +14,6 @@ network.on( 'message', async ( path: string, buffer: Buffer ) => {
 		if ( response ) network.publish( `${response.path}-${response.client}`, JSON.stringify( response.message ) )
 	}
 
-} )
+} );
 
+( global as any ).disconnect = ( ) => network.end()

@@ -4,6 +4,7 @@
 - No main file is required.
 - As a frontend, is a single page application.
 - Hot module reloading for frontend and backend.
+- No public directory is required.
 
 ### Frontend
 #### View
