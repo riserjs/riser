@@ -1,6 +1,8 @@
 import { connect } from 'mqtt'
 
-const network = connect( 'ws://localhost:9001' );
+declare var broker: any
+
+const network = connect( `ws://${broker.ip}:${broker.port}`, { username: broker.username, password: broker.password } );
 
 ( global as any ).publish = ( path: string, { client, message }: any ) => network.publish( `${path}-${client}`, JSON.stringify( message ) )
 

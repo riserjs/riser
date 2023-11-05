@@ -5,6 +5,10 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 import webpackDevServer from 'webpack-dev-server' 
 import memfs from 'memfs'
 
+declare var __non_webpack_require__: any
+
+const config = __non_webpack_require__( '../../../riser.json' )
+
 const random = () => 'abcdefghijklmnopqrstuvwxyz'[ Math.floor( Math.random() * 26 ) ] + Math.random().toString( 36 ).slice( -9 )
 
 const trvr = ( target: any ) => {
@@ -92,32 +96,21 @@ const myplugin = ( { types: t }: any ) => {
 
 				for ( let c in children ) {
 					const { type, expression } = children[ c ]
-					let props: any = []
+					let props = [], cat = '', index = c
 					if ( type != 'JSXExpressionContainer' ) continue
 					if ( expression?.type == 'CallExpression' && expression?.arguments[ 0 ].type == 'ArrowFunctionExpression' && expression?.callee.property.name == 'map' ) {
 						const r = random()
 						expression.arguments[ 0 ].body.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
-						trvr( expression ).map( ( p: string ) => attributes.push( save( p, expression, r, 'iteration', uid ) ) )
-						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-						//console.log('iteration', trvr( expression ))
-					} else if ( expression?.type == 'MemberExpression' ) {
-						//console.log('this', trvr( expression ))
+						cat = 'iteration'
 						props = trvr( expression )
-					} else if ( expression?.type == 'TemplateLiteral' ) {
+						index = `${c}-${r}`
+					} else if ( [ 'MemberExpression', 'TemplateLiteral', 'LogicalExpression', 'ConditionalExpression' ].includes( expression?.type ) ) {
+						cat = 'children'
 						props = trvr( expression )
-					} else if ( expression?.type == 'LogicalExpression' ) {
-						//console.log('logical', trvr( expression ))
-						props = trvr( expression )
-					} else if ( expression?.type == 'ConditionalExpression' ) {
-						const r = random()
-						expression.consequent.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
-						expression.alternate.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
-						trvr( expression ).map( ( p: string ) => attributes.push( save( p, expression, r, 'condition', r ) ) )
-						//console.log('condition', trvr( expression ))
 					}
 					if ( props.length > 0 ) {
 						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'children', Number( c ) ) ) )
+						props.map( ( p: string ) => attributes.push( save( p, expression, uid, cat, index ) ) )
 					}
 				}
 			}
@@ -135,15 +128,11 @@ const log = ( regex: RegExp, stats: any ) => {
 		excludeModules: [ ( m: string ) => !regex.test( m ) ]
 	} ) )
 }
- 
-declare var __non_webpack_require__: any
 
 const fConfig: any = {
   mode: 'development',
   entry: {
     index: [
-			//'webpack/hot/dev-server.js',
-			//'webpack-dev-server/client/index.js?hot=true&live-reload=true',
 			'./node_modules/riser/dist/frontend/loader',
 			'./node_modules/riser/dist/frontend/runtime',
 		]
@@ -187,8 +176,7 @@ const fConfig: any = {
 	},
   plugins: [
 		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false } ),
-		new webpack.ProvidePlugin( { process: 'process/browser' } ),
-		new webpack.ProvidePlugin( { Buffer: [ 'buffer', 'Buffer' ] } ),
+		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.broker ) } )
   ],
   output: {
     filename: 'index.js',
@@ -238,7 +226,8 @@ const bConfig: any = {
 		} ]
 	},
 	plugins: [
-		new webpack.HotModuleReplacementPlugin(),
+		new webpack.HotModuleReplacementPlugin( ),
+		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.broker ) } )
 	]
 }	
 
@@ -246,14 +235,14 @@ if ( process.argv[ process.argv.length - 1 ] == 'dev' ) {
 	
 	const fCompiler = webpack( fConfig )
 
-	new webpackDevServer( { hot: true, client: { logging: 'none' }, liveReload: true, port: 3000, historyApiFallback: true }, fCompiler ).start( )
+	new webpackDevServer( { hot: true, client: { logging: 'none' }, liveReload: true, port: config.development.port, historyApiFallback: true }, fCompiler ).start( )
 
 	const bCompiler: any = webpack( bConfig )
 	bCompiler.outputFileSystem = memfs
 	bCompiler.watch( { }, ( err: any, stats: any ) => {
-		log( blogs, stats );
-		if ( ( global as any ).disconnect ) ( global as any ).disconnect()
-		eval(bCompiler.outputFileSystem.readFileSync(`${bConfig.output.path}/main.js`).toString())
+		log( blogs, stats )
+		if ( ( global as any ).disconnect ) ( global as any ).disconnect( )
+		eval( bCompiler.outputFileSystem.readFileSync( `${bConfig.output.path}/main.js` ).toString( ) )
 	} )
 
 } else {

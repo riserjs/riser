@@ -1,47 +1,68 @@
+const getIndex = ( childs: any, index: any ) => {
+	let uid: string = '', last = Number( index )
+	for ( let i in childs ) {
+		if ( Number( i ) > last ) break
+		if ( childs[ i ] instanceof HTMLElement && childs[ i ].attributes.length > 0 && childs[ i ].getAttributeNames( )[ 0 ].length == 10 ) {
+			const id = childs[ i ].getAttributeNames( )[ 0 ]
+			if ( uid == id ) {
+				last += 1
+			} else {
+				uid = id
+			}
+		}
+	}
+	return last.toString( )
+}
+
 const update = ( elements: any ) => {
 	for ( let id in elements ) {
-		let element: any = document.querySelectorAll( `[${id}]` )
+		const element: any = document.querySelector( `[${id}]` )
 
-		if ( element.length == 0 ) {
-			if ( elements[ id ].iteration ) {
-				for ( let type in elements[ id ].iteration ) {
-					element = document.querySelectorAll( `[${type}]` )
-					for ( let e of elements[ id ].iteration[ type ]( ) ) element[ 0 ].appendChild( e )
-				}
-			}
-			continue
-		}
+		if ( !element ) continue
 
 		for ( let type in elements[ id ] ) {
 			if ( type == 'iteration' ) {
 
 				for ( let index in elements[ id ][ type ] ) {
-					const parent = element[ 0 ].parentNode
-					const prev = element[ 0 ].previousElementSibling
-					const next = element[ element.length - 1 ].nextElementSibling
-					for ( let e of element ) parent.removeChild( e )
-					const els = elements[ id ][ type ][ index ]()
-					if ( prev ) {
-						for ( let e of els.reverse() ) parent.insertBefore( e, prev.nextSibling )
-					} else if ( next ) {
-						for ( let e of els ) parent.insertBefore( e, next )
-					} else {
-						for ( let e of els ) parent.appendChild( e )
+
+					const n: any = document.querySelectorAll( `[${index.substring( 2 )}]` )
+					let prev: any, next: any
+					
+					if ( n.length != 0 ) {
+						prev = n[ 0 ].previousElementSibling
+						next = n[ n.length - 1 ].nextElementSibling
+						for ( let e of n ) e.parentNode.removeChild( e )
 					}
+
+					const els = elements[ id ][ type ][ index ]()
+
+					if ( els.length == 0 ) continue 
+
+					if ( element.childNodes.length == 0 ) {
+						for ( let e of els ) element.appendChild( e )
+						continue
+					}
+
+					if ( n.length != 0 ) {
+						if ( prev ) {
+							for ( let e of els.reverse() ) element.insertBefore( e, prev.nextSibling )
+						} else if ( next ) {
+							for ( let e of els ) element.insertBefore( e, next )
+						}
+						continue
+					}
+					
+					for ( let e of els.reverse() ) element.insertBefore( e, element.childNodes[ getIndex( element.childNodes, index[ 0 ] ) ] )
 				}
 
 			} else if ( type == 'attributes' ) {
 
-				for ( let name in elements[ id ][ type ] ) element[ 0 ].setAttribute( name, elements[ id ][ type ][ name ]() )
+				for ( let name in elements[ id ][ type ] ) element.setAttribute( name, elements[ id ][ type ][ name ]() )
 
 			} else if ( type == 'children' ) {
 
-				for ( let index in elements[ id ][ type ] ) element[ 0 ].childNodes[ index ].replaceWith( elements[ id ][ type ][ index ]() )				
+				for ( let index in elements[ id ][ type ] ) element.childNodes[ getIndex( element.childNodes, index ) ].replaceWith( elements[ id ][ type ][ index ]() )	
 				
-			} else if ( type == 'condition' ) {
-
-				for ( let index in elements[ id ][ type ] ) element[ 0 ].replaceWith( elements[ id ][ type ][ index ]() )
-
 			}
 		}
 	}

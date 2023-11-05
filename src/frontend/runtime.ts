@@ -1,4 +1,4 @@
-import * as mqtt from 'mqtt'
+import { connect } from 'mqtt/dist/mqtt.min'
 
 const addAttributes = ( elem: any, attrs: any ) => {
 	if ( attrs === null || attrs === undefined ) attrs = {}
@@ -65,9 +65,9 @@ const Fragment = ( { children }: any ) => {
 
 const getUrlParams = () => Object.fromEntries( new URLSearchParams( location.search ) )
 
-declare var port: number
+declare var broker: any
 
-const network = mqtt.connect( 'ws://localhost:9001' )
+const network = connect( `ws://${location.hostname}:${broker.port}`, { username: broker.username, password: broker.password } );
 
 let client = localStorage.getItem( 'client' ) ?  localStorage.getItem( 'client' ) : Math.random().toString( 36 ).slice( -9 )
 
