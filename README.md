@@ -53,7 +53,7 @@
 
 ```typescript
 // home.view.tsx
-import { View, Navigator, Request } from 'riser'
+import { View, Navigate, Request } from 'riser'
 import { ButtonComponent } from './button.component'
 
 @View( '/' )
@@ -179,7 +179,7 @@ export class ButtonComponent {
 
 ```typescript
 // user.gateway.ts
-import { Gateway, Request, Reaponse } from 'riser'
+import { Gateway, Request, Response } from 'riser'
 
 @Gateway( '/user' )
 export class UserGateway {
