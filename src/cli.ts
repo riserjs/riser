@@ -27,7 +27,17 @@ const trvr = ( target: any ) => {
 	return props
 }
 
-const myplugin = ( { types: t }: any ) => {
+const enableReactivity = ( { types: t }: any ) => {
+
+	const replaceFragment = ( node: any ) => {
+		if ( node?.type == 'JSXFragment' ) {
+			node.type = 'JSXElement'
+			node.openingElement = t.jSXOpeningElement( t.jSXIdentifier( 'div' ), [] )
+			node.closingElement = t.jSXClosingElement( t.jSXIdentifier( 'div' ) )
+			delete node.openingFragment
+			delete node.closingFragment
+		} 
+	}
 
 	const save = ( state: string, expression: any, uid: string, type: string, param: string | number ) => {
 		return t.jSXAttribute(
@@ -100,11 +110,20 @@ const myplugin = ( { types: t }: any ) => {
 					if ( type != 'JSXExpressionContainer' ) continue
 					if ( expression?.type == 'CallExpression' && expression?.arguments[ 0 ].type == 'ArrowFunctionExpression' && expression?.callee.property.name == 'map' ) {
 						const r = random()
+						replaceFragment( expression.arguments[ 0 ].body )
 						expression.arguments[ 0 ].body.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
 						cat = 'iteration'
 						props = trvr( expression )
 						index = `${c}-${r}`
-					} else if ( [ 'MemberExpression', 'TemplateLiteral', 'LogicalExpression', 'ConditionalExpression' ].includes( expression?.type ) ) {
+					} else if ( [ 'MemberExpression', 'TemplateLiteral', 'LogicalExpression' ].includes( expression?.type ) ) {
+						cat = 'children'
+						props = trvr( expression )
+					} else if ( expression?.type == 'ConditionalExpression' ) {
+						const r = random()
+						replaceFragment( expression.consequent )
+						replaceFragment( expression.alternate )
+						expression.consequent.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
+						expression.alternate.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
 						cat = 'children'
 						props = trvr( expression )
 					}
@@ -162,7 +181,7 @@ const fConfig: any = {
 					],
 					plugins: [
 						[ '@babel/plugin-proposal-decorators', { 'legacy': true } ],
-						[ myplugin ]
+						[ enableReactivity ]
 					]
 				}
 			}
@@ -175,7 +194,7 @@ const fConfig: any = {
 		]
 	},
   plugins: [
-		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false } ),
+		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false, title: config.appname } ),
 		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.broker ) } )
   ],
   output: {

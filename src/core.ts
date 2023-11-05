@@ -76,6 +76,7 @@ const define = ( value: any ) => {
 	value.q.update = ( ) => update( value.q.elements )
 	value.q.append = ( id: string, type: string, param: any ) => { ( ( value.q.elements[ id ] ??= {} )[ type ] ??= {} )[ param.name ? param.name : param.index ] = param.value }
 } 
+
 //Object.defineProperty( Array.prototype, 'isEmpty', { value: () => Array.prototype.length == 0 ? false : true } )
 //Object.defineProperty( Object.prototype, 'isEmpty', { value: () => Object.keys( Object.prototype ).length == 0 ? false : true } )
 
