@@ -5,6 +5,7 @@
 - As a frontend, is a single page application.
 - Hot module reloading for frontend and backend.
 - No public directory is required.
+- No disk cache in development mode
 
 ### Frontend
 #### View
@@ -13,7 +14,7 @@
 
 #### Component
 - Method auto binding
-- Re rendering enabled for states changes
+- Reactivity enabled for states
 - Initiate event like useEffect hook
 - State decorator like useState without set method
 - Property decorator like react props
@@ -26,13 +27,13 @@
 
 ### Backend
 #### Gateway
-- Gateway decorator websocket auto instance with main path
-- Request decorator websocket listen event callback with secondary path
-- Response websocket method send to request client
-- Broadcast websocket global event send
+- Gateway decorator network auto instance with main path
+- Request decorator network listen event callback with secondary path
+- Response network method send to request client
+- Broadcast network global event send????????
 
-#### Database
-- Database decorator auto instance
+#### Service?????
+- Service decorator auto instance
 - Initiate decorator autoexecute method
 
 #### Guard
@@ -44,18 +45,15 @@
 - Logger decorator optionally can log arguments and/or returns
 
 #### Future implementations
-- Config file
-- Mail sender in backend as jsx
 - Layout shared to avoid rerendering on routing
 - Styled themes
-- Object type for state
 
 ### Frontend
 #### View
 
 ```typescript
 // home.view.tsx
-import { View, Navigator, Request } from 'riser'
+import { View, Navigate, Request } from 'riser'
 import { ButtonComponent } from './button.component'
 
 @View( '/' )
@@ -181,7 +179,7 @@ export class ButtonComponent {
 
 ```typescript
 // user.gateway.ts
-import { Gateway, Request, Reaponse } from 'riser'
+import { Gateway, Request, Response } from 'riser'
 
 @Gateway( '/user' )
 export class UserGateway {
