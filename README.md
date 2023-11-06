@@ -1,4 +1,4 @@
-### A decentralized framework for develop frontend and or backend realtime applications.
+### A decentralized framework for develop frontend and or backend realtime applications
 - Incoming events path listen on .view.tsx .gateway.ts file types declaration
 - No directory structure is required
 - No main file is required
@@ -29,7 +29,7 @@ export class ExampleView {
 
   render( ) {
     return (
-      <>{ 'ExampleView' }</>
+      <>{ this.name }</>
     )
   }
 
