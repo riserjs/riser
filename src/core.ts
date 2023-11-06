@@ -1,3 +1,5 @@
+import 'reflect-metadata'
+
 const getIndex = ( childs: any, index: any ) => {
 	let uid: string = '', last = Number( index )
 	for ( let i in childs ) {
@@ -88,6 +90,16 @@ export const Gateway = ( path: string ) => {
 				super()
 				this.exposes = this.exposes
 				for ( let i in this.__requests__ ) ( ( global as any ).subscribers ??= {} )[ `${path}${i}` ] = this[ this.__requests__[ i ] ]
+
+				// ENABLE DEPENDECY INJECTION
+				for ( let s in ( global as any ).__services__ ) {
+					for ( let i in this.__injection__ ) if ( i == s ) {
+						this[ this.__injection__[ i ] ] = ( global as any ).__services__[ i ]
+					}
+				}
+
+				// RUN INITIATE METHODS
+				for ( let key in this.__initiate__ ) this[ this.__initiate__[ key ] ]( )
 			}
 		}
 	}
@@ -108,17 +120,25 @@ export const Broadcast = ( path: string, data: any ) => {
 	( global as any ).publish( path, data )
 }
 
-export const Database = ( ) => {
+export const Service = ( ) => {
 	return ( target: any ) => {
-		if ( !( global as any ).databases ) { ( global as any ).databases = {} }
-		( global as any ).databases[ target.name ] = new class extends target {
+		if ( !( global as any ).__services__ ) { ( global as any ).__services__ = {} }
+		( global as any ).__services__[ target.name ] = new class extends target {
 			constructor( ) {
 				super()
 
-				// RUN ONINIT METHODS
+				// RUN INITIATE METHODS
 				for ( let key in this.__initiate__ ) this[ this.__initiate__[ key ] ]( ) 
 			}
 		}
+	}
+}
+
+export const Inject = ( ) => {
+	return ( target: any, key: string ) => {
+		const { name } = Reflect.getMetadata( 'design:type', target, key )
+		if ( !target.__injection__ ) target.__injection__ = {}
+		target.__injection__[ name ] = key
 	}
 }
 

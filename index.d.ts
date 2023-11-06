@@ -15,7 +15,8 @@ declare module 'riser' {
   export interface Response { path: string, data: any }
   export function Response ( path: string, data: any )
   export function Broadcast( path: string, data: any )
-  export function Database( )
+  export function Service( )
+  export function Inject( )
   export function Logger( value?: any )
   export function Guard( )
   export function Intercept( )

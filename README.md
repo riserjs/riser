@@ -6,6 +6,7 @@
 - Hot module reloading for frontend and backend.
 - No public directory is required.
 - No disk cache in development mode
+- Assets can be directly imported
 
 ### Frontend
 #### View

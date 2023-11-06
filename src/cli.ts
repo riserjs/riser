@@ -138,7 +138,7 @@ const enableReactivity = ( { types: t }: any ) => {
 }
 
 const flogs = /\.(view|component).(js|jsx|ts|tsx)?$/
-const blogs = /\.(gateway|guard|database).(js|jsx|ts|tsx)?$/
+const blogs = /\.(gateway|guard|service).(js|jsx|ts|tsx)?$/
 
 const log = ( regex: RegExp, stats: any ) => {
 	console.log( stats.toString( {
@@ -238,7 +238,12 @@ const bConfig: any = {
 						[ '@babel/typescript' ]
 					],
 					plugins: [
-						[ '@babel/plugin-proposal-decorators', { 'legacy': true } ]
+						[ 'babel-plugin-transform-typescript-metadata' ],
+						[ '@babel/plugin-proposal-decorators', { legacy: true } ],
+						[ '@babel/plugin-transform-class-properties', { loose: true } ],
+						[ '@babel/plugin-transform-private-methods', { loose: true } ],
+						[ '@babel/plugin-transform-private-property-in-object', { loose: true } ],
+						[ '@babel/plugin-transform-optional-chaining' ]
 					]
 				}
 			}

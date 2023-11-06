@@ -1,7 +1,7 @@
 let context
 
 const load = () => {
-	context = require.context( `${__dirname}/../../../../src`, true, /\.(gateway|guard|database).(js|ts)?$/ )
+	context = require.context( `${__dirname}/../../../../src`, true, /\.(gateway|guard|service).(js|ts)?$/ )
 	context.keys().map( ( file ) => context( file ) )
 }
 
