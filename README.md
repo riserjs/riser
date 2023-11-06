@@ -1,247 +1,224 @@
-### A decentralized framework for develop frontend and/or backend realtime applications
-- Incoming events path listen on .view.tsx .gateway.ts file types declaration.
-- No directory structure is required.
-- No main file is required.
-- As a frontend, is a single page application.
-- Hot module reloading for frontend and backend.
-- No public directory is required.
+### A decentralized framework for develop frontend and or backend realtime applications.
+- Incoming events path listen on .view.tsx .gateway.ts file types declaration
+- No directory structure is required
+- No main file is required
+- As a frontend is a single page application
+- As a backend is built in microservices with a message BROKER
+- Hot module reloading for frontend and backend
+- No public directory is required
 - No disk cache in development mode
-- Assets can be directly imported
+- Not using http for backend API
+- Frontend and backend compiled isolated
+- Reactivity enabled for states
+- Method auto binding
+- Images can by directly imported
 
 ### Frontend
 #### View
 - View decorator path route and auto instance
-- Parameter decorator to extract url parameter
+- Parameter decorator to extract route url parameter
+
+```typescript
+import { View, Parameter } from 'riser'
+
+@View( '/example' )
+export class ExampleView {
+
+  @Parameter( )
+  name: string
+
+  render( ) {
+    return (
+      <>{ 'ExampleView' }</>
+    )
+  }
+
+}
+```
 
 #### Component
-- Method auto binding
-- Reactivity enabled for states
+- Component decorator to enable component
 - Initiate event like useEffect hook
 - State decorator like useState without set method
 - Property decorator like react props
 - Children as render argument
+
+
+```typescript
+import { Component, Property, State, Initiate, Logger } from 'riser'
+
+@Component( )
+export class ExampleComponent {
+
+  @State( )
+  text: string
+
+  @Property( )
+  onClick: any
+
+  @Initiate( )
+  onInit( ) {
+    Logger( 'Example Component!' )
+  }
+
+  render( children: any ) {
+    return (
+      <>
+        <ul>{ children }</ul>
+        <input type='text' onChange={ ( event: any ) => { this.text = event.target.value } }/>
+        <button onClick={ () => this.onClick( this.text ) }>Send</button>
+      </>
+    )
+  }
+
+}
+```
 
 #### Utility
 - Navigate method for routing
 - Receptor decorator for websocket events callback
 - Emitter method gateway event send
 
+```typescript
+import { View, Navigate, Receptor, Emitter, Logger } from 'riser'
+
+@View( '/example' )
+export class ExampleView {
+
+  ...
+  @Logger( 'in' )
+  @Receptor( '/example/read' )
+  onRead( message: string ) {
+    Emitter( '/example/create', message )
+    Navigate( '/another' )
+  }
+  ...
+
+}
+```
+
 ### Backend
 #### Gateway
 - Gateway decorator network auto instance with main path
 - Request decorator network listen event callback with secondary path
 - Response network method send to request client
-- Broadcast network global event send????????
+- Broadcast network send event to multiple clients
 
-#### Service?????
+```typescript
+import { Gateway, Request, Response, Broadcast, Logger } from 'riser'
+
+@Gateway( '/example' )
+export class ExampleGateway {
+
+  @Logger( 'out' )
+  @Request( '/create' )
+  onCreate( message: string ): Response {
+    Broadcast( '/example/read', [ 'user1', 'user2' ], message )
+    return Response( '/example/read', message )
+  }
+
+}
+```
+
+#### Service
 - Service decorator auto instance
-- Initiate decorator autoexecute method
+- Inject decorator for service dependecy injection
+- Initiate autoexecute method
+
+```typescript
+import { Gateway, Inject } from 'riser'
+import { ExampleService } from './example.service.ts'
+
+@Gateway( '/example' )
+export class ExampleGateway {
+
+  @Inject( )
+  service: ExampleService
+
+}
+
+import { Service, Initiate } from 'riser'
+
+@Service( )
+export class ExampleService {
+
+  @Initiate( )
+  connect( ) {
+    // handle database connection
+  }
+
+}
+```
 
 #### Guard
 - Guard decorator auto instance
 - Intercept decorator middleware event callback
 - Expose decorator to expose gateway event callbacks from guard
 
-#### Utility
-- Logger decorator optionally can log arguments and/or returns
-
-#### Future implementations
-- Layout shared to avoid rerendering on routing
-- Styled themes
-
-### Frontend
-#### View
 
 ```typescript
-// home.view.tsx
-import { View, Navigate, Request } from 'riser'
-import { ButtonComponent } from './button.component'
+import { Gateway, Expose } from 'riser'
 
-@View( '/' )
-export class HomeView {
-
-  render( ) {
-    return (
-      <>
-        <ButtonComponent label={ 'Go to message!' } onClick={ () => Navigator( '/message' ) }/>
-        <ButtonComponent label={ 'Go to message with params' } onClick={ () => Navigator( '/message?height=200&width=300' ) }/>
-        <ButtonComponent label={ 'Check endpoint authorization!' } onClick={ () => Request( '/account/create', { a: 1 } ) }/>
-      </>
-    )
-  }
-
-}
-```
-
-```typescript
-// message.view.tsx
-import { View, Navigate, Parameter } from 'riser'
-import { ButtonComponent } from './button.component'
-import { ChatComponent } from './chat.component'
-
-@View( '/message' )
-export class MessageView {
-
-  @Parameter()
-  height: number
-
-  @Parameter()
-  width: number
-
-  render( ) {
-    return (
-      <>
-        <ButtonComponent label={ 'Go to home!' } onClick={ () => Navigate( '/' ) }/>	
-        <ChatComponent/>
-        {this.height} {this.width}
-      </>
-    )
-  }
-
-}
-```
-
-#### Component 
-
-```typescript
-// chat.component.tsx
-import { Component, State, Receptor, Emitter } from 'riser'
-
-@Component()
-export class ChatComponent {
-
-  @State()
-  messages: String[] = [ ]
-
-  @Receptor( '/message/read' )
-  onRead( message: String ) {
-    this.messages.unshift( message )
-  }
-
-  onCreate( ) {
-    Emitter( '/message/create', this.input )
-    this.input = ''
-  }
-
-  input: String
-
-  render( ) {
-    return (
-      <>
-        <ul class="m-4 mt-0 list-none list-inside text-blue-dark border w-[363px] h-[100px] overflow-auto rounded">
-          { this.messages.map( ( m: any ) => <li>{ m }</li> ) }
-        </ul>
-        <div class="flex m-4">
-          <input
-            type="text"
-            placeholder="Write Here!"
-            class="py-2 px-2 text-md border focus:outline-none rounded"
-            onKeyUp={ ( e: any ) => this.input = e.target.value }
-          />
-          <button
-            class="ml-4 w-20 flex items-center justify-center border rounded text-blue-dark"
-            onClick={this.onCreate}
-          >Send
-          </button>
-        </div>
-      </>
-    )
-  }
-
-}
-```
-
-```typescript
-// button.component.tsx
-import { Component, Property } from 'riser'
-
-@Component()
-export class ButtonComponent {
-
-  @Property()
-  label: string
-
-  @Property()
-  onClick: any
-
-  render( ) {
-    return (
-      <button class="m-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onClick={this.onClick}>
-        {this.label}
-      </button>
-    )
-  }
-
-}
-```
-
-### Backend
-#### Gateway
-
-```typescript
-// user.gateway.ts
-import { Gateway, Request, Response } from 'riser'
-
-@Gateway( '/user' )
-export class UserGateway {
-
-  @Request( '/create' )
-  onCreate( message: any ): Response {
-    return Response( '/user/read', message )
-  }
-
-}
-```
-
-```typescript
-// message.gateway.ts
-import { Gateway, Request, Broadcast, Logger, Expose } from 'riser'
-
-@Gateway( '/message' )
-export class MessageGateway {
+@Gateway( '/example' )
+export class ExampleGateway {
 
   @Expose( )
-  @Logger( )
   @Request( '/create' )
-  onCreate( message: any ) {
-    Broadcast( '/message/read', message )
+  onCreate( message: string ): void {
   }
 
 }
 
-```
-
-#### Database
-
-```typescript
-// mongodb.database.ts
-import { Database, Initiate } from 'riser'
-
-@Database( )
-export class MongodbDatabase {
-
-  @Initiate()
-  connect() {
-    // database connection
-  }
-
-}
-```
-
-#### Guard
-
-```typescript
-// authorization.guard.ts
-import { Guard, Intercept, Logger } from 'riser'
+import { Guard, Intercept } from 'riser'
 
 @Guard( )
-export class AuthorizationGuard {
+export class ExampleGuard {
 
-  @Logger( )
   @Intercept( )
-  onAuthorize( { path, data }: any ) {
+  onAuthorize( { path, message }: any ) {
     return false
   }
 
 }
 ```
+
+#### Utility
+- Logger decorator optionally can log arguments and/or returns
+
+```typescript
+import { Gateway, Request, Response, Logger } from 'riser'
+
+@Gateway( '/example' )
+export class ExampleGateway {
+
+  @Logger( )
+  @Request( '/create' )
+  onCreate( message: string ): Response {
+    return Response( '/example/read', message )
+  }
+
+}
+```
+
+#### Configuration
+- Config file
+
+```json
+{
+  "appname": "example",
+  "development": {
+    "port": 3000
+  },
+  "broker": {
+    "name": "mqtt",
+    "ip": "localhost",
+    "port": 9001,
+    "username": "root",
+    "password": "root"
+  }
+}
+```
+
+#### Future implementations
+- Layout shared to avoid rerendering on routing
+- Styled themes
