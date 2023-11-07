@@ -37,10 +37,12 @@ const appendChild = ( elem: any, children: any ) => {
 const createElement = ( elem: any, attributes: any, ...children: any ) => {
 	if ( typeof elem === 'function' ) {
 		if ( elem.name === 'Fragment' ) { 
-			// fragment
 			return elem( { children } ) 
 		} else {
-			// view && component
+			// view && component && interface
+
+			// pasar this o C a todos los children o en el runtime enviar el this como argumento deberia ser como attribute parent
+			// loop de todos los children y verificar qeu alguno sea un component?
 			const element = document.createElement( 'div' )
 			const c = new elem( { attributes, element, children } )
 			element.setAttribute( `${c.element}`, '' )
@@ -140,4 +142,3 @@ console.log = function( ...args ) {
 		return arg
 	} ) )
 }
-

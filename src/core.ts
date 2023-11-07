@@ -77,10 +77,7 @@ const define = ( value: any ) => {
 	value.q.state = true
 	value.q.update = ( ) => update( value.q.elements )
 	value.q.append = ( id: string, type: string, param: any ) => { ( ( value.q.elements[ id ] ??= {} )[ type ] ??= {} )[ param.name ? param.name : param.index ] = param.value }
-} 
-
-//Object.defineProperty( Array.prototype, 'isEmpty', { value: () => Array.prototype.length == 0 ? false : true } )
-//Object.defineProperty( Object.prototype, 'isEmpty', { value: () => Object.keys( Object.prototype ).length == 0 ? false : true } )
+}
 
 export const Gateway = ( path: string ) => {
 	return ( target: any ) => {
@@ -88,8 +85,16 @@ export const Gateway = ( path: string ) => {
 		( global as any ).gateway[ path ] = new class extends target {
 			constructor( ) {
 				super()
-				this.exposes = this.exposes
+
+				// ENABLE REQUESTS
 				for ( let i in this.__requests__ ) ( ( global as any ).subscribers ??= {} )[ `${path}${i}` ] = this[ this.__requests__[ i ] ]
+
+				// ENABLE EXPOSES
+				for ( let r in this.__requests__ ) {
+					for ( let e in this.__exposes__ ) {
+						if ( this.__requests__[ r ] == this.__exposes__[ e ] ) ( ( global as any ).exposes ??= {} )[ `${path}${r}` ] = e
+					}
+				}
 
 				// ENABLE DEPENDECY INJECTION
 				for ( let s in ( global as any ).__services__ ) {
@@ -112,12 +117,12 @@ export const Request = ( path: string ) => {
 	}
 }
 
-export const Response = ( path: string, { client, message }: any ) => {
-	return { path, client, message }
+export const Response = ( path: string, message: any ) => {
+	return { path, message }
 }
 
-export const Broadcast = ( path: string, data: any ) => {
-	( global as any ).publish( path, data )
+export const Broadcast = ( { clients, path, message }: any ) => {
+	for ( let i in clients ) ( global as any ).publish( `${path}-${clients[ i ]}`, message )
 }
 
 export const Service = ( ) => {
@@ -186,8 +191,8 @@ export const Intercept = ( ) => {
 
 export const Expose = ( ) => {
 	return ( target: any, key: string ) => {
-		if ( !target.exposes ) target.exposes = []
-		target.exposes.push( key )
+		if ( !target.__exposes__ ) target.__exposes__ = []
+		target.__exposes__.push( key )
 	}
 }
 
@@ -242,17 +247,10 @@ export const Component = () => {
 				}
 
 				// DEFINE RECEPTORS
-				if ( this.receptor ) for ( let key in this.receptor ) {
-					//try {
-					//( global as any ).ws.off( key )
-					//} catch { }
-					( global as any ).subscribe( key, this[ this.receptor[ key ] ] )
-				}
-
+				if ( this.receptor ) for ( let key in this.receptor ) ( global as any ).subscribe( key, this[ this.receptor[ key ] ] )
+				
 				// DEFINE PROPERTIES
-				if ( data.attributes ) for ( let key in this.properties ) {
-					this[ this.properties[ key ] ] = data.attributes[ this.properties[ key ] ]
-				}
+				if ( data.attributes ) for ( let key in this.properties ) this[ this.properties[ key ] ] = data.attributes[ this.properties[ key ] ]
 				
 				// RUN INITIATE METHODS
 				for ( let key in this.__initiate__ ) this[ this.__initiate__[ key ] ]( ) 
@@ -276,14 +274,14 @@ export const Navigate = ( path: string ) => {
 	return ( global as any ).router( path )
 }
 
-export const Receptor = ( path: string ) => {
+export const Subscribe = ( path: string ) => {
 	return ( target: any, key: string ) => {
 		if ( !target.receptor ) target.receptor = {}
 		target.receptor[ path ] = key
 	}
 }
 
-export const Emitter = ( path: string, message: any ) => {
+export const Publish = ( path: string, message: any ) => {
 	( global as any ).publish( path, message )
 }
 

@@ -12,9 +12,8 @@ declare global {
 declare module 'riser' {
   export function Gateway( path: string )
   export function Request( path: string )
-  export interface Response { path: string, data: any }
-  export function Response ( path: string, data: any )
-  export function Broadcast( path: string, data: any )
+  export function Response( path: string, message: any )
+  export function Broadcast( { clients, path, message }: any )
   export function Service( )
   export function Inject( )
   export function Logger( value?: any )
@@ -25,13 +24,28 @@ declare module 'riser' {
   export function Component( )
   export function Initiate( )
   export function Navigate( path: string )
-  export function Emitter( path: string, message: any )
-  export function Receptor( path: string )
+  export function Publish( path: string, message: any )
+  export function Subscribe( path: string )
   export function State( )
   export function Parameter( )
   export function Property( )
   export function Client( value: string )
+  export type Request = { client: string, path: string, message: any }
+  export type Response = { path: string, message: any }
+  export type Children = HTMLElement[]
 }
+
+//interface Object extends Object { map?: any }
+
+/*Object.prototype.map = function( callback: any ) {
+	return Object.entries( this ).map( ( v ) => callback( v[0], v[1] ) )
+}*/
+
+/*Number.prototype.format = (): string => {}*/
+
+
+//Object.defineProperty( Array.prototype, 'isEmpty', { value: () => Array.prototype.length == 0 ? false : true } )
+//Object.defineProperty( Object.prototype, 'isEmpty', { value: () => Object.keys( Object.prototype ).length == 0 ? false : true } )
 
 namespace JSX {
   interface IntrinsicElements {
@@ -166,12 +180,3 @@ interface Number { q }
 interface Boolean { q }
 interface Array { q, isEmpty }
 interface Object { q, isEmpty }
-
-
-//interface Object extends Object { map?: any }
-
-/*Object.prototype.map = function( callback: any ) {
-	return Object.entries( this ).map( ( v ) => callback( v[0], v[1] ) )
-}*/
-
-/*Number.prototype.format = (): string => {}*/

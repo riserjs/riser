@@ -7,7 +7,7 @@ import memfs from 'memfs'
 
 declare var __non_webpack_require__: any
 
-const config = __non_webpack_require__( '../../../riser.json' )
+const config = __non_webpack_require__( '../../../riser.config.js' )( process.argv[ process.argv.length - 1 ] == 'dev' ? 'development' : 'production' )
 
 const random = () => 'abcdefghijklmnopqrstuvwxyz'[ Math.floor( Math.random() * 26 ) ] + Math.random().toString( 36 ).slice( -9 )
 

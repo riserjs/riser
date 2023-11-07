@@ -3,11 +3,11 @@
 - No directory structure is required
 - No main file is required
 - As a frontend is a single page application
-- As a backend is built in microservices with a message BROKER
+- As a backend is using message broker instead of http
 - Hot module reloading for frontend and backend
 - No public directory is required
 - No disk cache in development mode
-- Not using http for backend API
+- Built in tailwind
 - Frontend and backend compiled isolated
 - Reactivity enabled for states
 - Method auto binding
@@ -43,9 +43,8 @@ export class ExampleView {
 - Property decorator like react props
 - Children as render argument
 
-
 ```typescript
-import { Component, Property, State, Initiate, Logger } from 'riser'
+import { Component, Property, State, Initiate, Children } from 'riser'
 
 @Component( )
 export class ExampleComponent {
@@ -61,12 +60,12 @@ export class ExampleComponent {
     Logger( 'Example Component!' )
   }
 
-  render( children: any ) {
+  render( children: Children ) {
     return (
       <>
         <ul>{ children }</ul>
         <input type='text' onChange={ ( event: any ) => { this.text = event.target.value } }/>
-        <button onClick={ () => this.onClick( this.text ) }>Send</button>
+        <button onClick={ ( ) => this.onClick( this.text ) }>Send</button>
       </>
     )
   }
@@ -76,20 +75,20 @@ export class ExampleComponent {
 
 #### Utility
 - Navigate method for routing
-- Receptor decorator for websocket events callback
-- Emitter method gateway event send
+- Subscribe decorator for websocket events callback
+- Publish method websocket event send
 
 ```typescript
-import { View, Navigate, Receptor, Emitter, Logger } from 'riser'
+import { View, Navigate, Subscribe, Publish, Logger } from 'riser'
 
 @View( '/example' )
 export class ExampleView {
 
   ...
   @Logger( 'in' )
-  @Receptor( '/example/read' )
+  @Subscribe( '/example/read' )
   onRead( message: string ) {
-    Emitter( '/example/create', message )
+    Publish( '/example/create', message )
     Navigate( '/another' )
   }
   ...
@@ -99,10 +98,10 @@ export class ExampleView {
 
 ### Backend
 #### Gateway
-- Gateway decorator network auto instance with main path
-- Request decorator network listen event callback with secondary path
-- Response network method send to request client
-- Broadcast network send event to multiple clients
+- Gateway decorator websocket auto instance with main path
+- Request decorator websocket listen event callback with secondary path
+- Response websocket method send to request client
+- Broadcast websocket send event to multiple clients
 
 ```typescript
 import { Gateway, Request, Response, Broadcast, Logger } from 'riser'
@@ -112,8 +111,8 @@ export class ExampleGateway {
 
   @Logger( 'out' )
   @Request( '/create' )
-  onCreate( message: string ): Response {
-    Broadcast( '/example/read', [ 'user1', 'user2' ], message )
+  onCreate( { client, message }: Request ): Response {
+    Broadcast( '/example/read', [ client, 'user2' ], message )
     return Response( '/example/read', message )
   }
 
@@ -142,7 +141,7 @@ import { Service, Initiate } from 'riser'
 @Service( )
 export class ExampleService {
 
-  @Initiate( )
+  @Boot( )
   connect( ) {
     // handle database connection
   }
@@ -157,14 +156,14 @@ export class ExampleService {
 
 
 ```typescript
-import { Gateway, Expose } from 'riser'
+import { Gateway, Expose, Request } from 'riser'
 
 @Gateway( '/example' )
 export class ExampleGateway {
 
   @Expose( )
   @Request( '/create' )
-  onCreate( message: string ): void {
+  onCreate( { client, message }: Request ): void {
   }
 
 }
@@ -175,8 +174,8 @@ import { Guard, Intercept } from 'riser'
 export class ExampleGuard {
 
   @Intercept( )
-  onAuthorize( { path, message }: any ) {
-    return false
+  onAuthorize( { client, path, message }: Request ) {
+    return true
   }
 
 }
@@ -193,7 +192,7 @@ export class ExampleGateway {
 
   @Logger( )
   @Request( '/create' )
-  onCreate( message: string ): Response {
+  onCreate( { client, message }: Request ): Response {
     return Response( '/example/read', message )
   }
 
@@ -211,7 +210,7 @@ export class ExampleGateway {
   },
   "broker": {
     "name": "mqtt",
-    "ip": "localhost",
+    "host": "localhost",
     "port": 9001,
     "username": "root",
     "password": "root"
