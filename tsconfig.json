@@ -8,7 +8,7 @@
 		"jsxFactory": "global.jsx",
 		"jsxFragmentFactory": "global.jsx.Fragment",
 		"allowJs": true,
-		"checkJs": true,
+		//"checkJs": true,
 		"skipLibCheck": true,
 		//"strict": true,
 		"strictPropertyInitialization": false,

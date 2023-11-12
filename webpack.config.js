@@ -104,48 +104,4 @@ const cli = {
 	]
 }
 
-const iConfig = {
-  mode: 'production',
-  entry: {
-    interface: [
-			'./src/interface/index.ts',
-		]
-  },
-	target: 'web',
-  resolve: {
-		extensions: [ '.js', '.jsx', '.ts', '.tsx' ],
-	},
-	module: {
-		rules: [ { 
-			test: /\.(js|jsx|ts|tsx)$/,
-			exclude: /node_modules/,
-			use: {
-				loader: 'babel-loader',
-				options: {
-					presets: [
-						[ '@babel/preset-env' ],
-						[ '@babel/typescript' ],
-						[ '@babel/preset-react', { 'pragma': 'global.jsx.createElement', 'pragmaFrag': 'global.jsx.Fragment' } ]
-					],
-					plugins: [
-						[ '@babel/plugin-proposal-decorators', { 'legacy': true } ]
-					]
-				}
-			}
-		},
-		{
-			test: /\.(png|ico)$/,
-			type: 'asset/resource',
-			generator: { filename: 'assets/[name][ext]' },
-		},
-		]
-	},
-  output: {
-		globalObject: 'this',
-		libraryTarget: 'commonjs2',
-		filename: '[name].js',
-		path: path.resolve( __dirname, 'dist' ),
-  },
-}
-
-module.exports = [ frontend, backend, core, cli, iConfig ]
+module.exports = [ frontend, backend, core, cli ]

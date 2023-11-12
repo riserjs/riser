@@ -2,14 +2,16 @@ import webpack from 'webpack'
 import path from 'path'
 import nodeExternals from 'webpack-node-externals'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
-import webpackDevServer from 'webpack-dev-server' 
+import webpackDevServer from 'webpack-dev-server'
+import TerserPlugin from 'terser-webpack-plugin'
 import memfs from 'memfs'
+import { random } from './utils'
 
 declare var __non_webpack_require__: any
 
-const config = __non_webpack_require__( '../../../riser.config.js' )( process.argv[ process.argv.length - 1 ] == 'dev' ? 'development' : 'production' )
+const mode = process.argv[ process.argv.length - 1 ] == 'dev' ? 'development' : 'production'
 
-const random = () => 'abcdefghijklmnopqrstuvwxyz'[ Math.floor( Math.random() * 26 ) ] + Math.random().toString( 36 ).slice( -9 )
+const config = __non_webpack_require__( '../../../riser.config.js' )( mode )
 
 const trvr = ( target: any ) => {
 	let props: any = []
@@ -29,6 +31,8 @@ const trvr = ( target: any ) => {
 
 const enableReactivity = ( { types: t }: any ) => {
 
+	let runtime = -1
+
 	const replaceFragment = ( node: any ) => {
 		if ( node?.type == 'JSXFragment' ) {
 			node.type = 'JSXElement'
@@ -40,23 +44,19 @@ const enableReactivity = ( { types: t }: any ) => {
 	}
 
 	const save = ( state: string, expression: any, uid: string, type: string, param: string | number ) => {
-		return t.jSXAttribute(
-			t.jSXIdentifier( random() ),
-			t.jSXExpressionContainer(
-				t.logicalExpression(
-					'&&',
-					t.memberExpression( t.memberExpression( t.memberExpression( t.thisExpression(), t.identifier( state ) ), t.identifier( 'q' ) ), t.identifier( 'state' ) ),
+		return t.jSXAttribute( t.jSXIdentifier( 'runtime'+runtime++ ),
+				t.jSXExpressionContainer(
 					t.callExpression(
-						t.memberExpression( t.memberExpression( t.memberExpression( t.thisExpression(), t.identifier( state ) ), t.identifier( 'q' ) ), t.identifier( 'append' ) ),
+						t.memberExpression( t.thisExpression( ), t.identifier( 'append' ) ), 
 						[
+							t.stringLiteral( state ),
 							t.stringLiteral( uid ),
 							t.stringLiteral( type ),
-							t.objectExpression( [
-								t.objectProperty( t.stringLiteral( typeof param === 'string' ? 'name' : 'index' ), typeof param === 'string' ? t.stringLiteral( param ) : t.numericLiteral( param ) ),
-								t.objectProperty( t.identifier( 'value' ), t.arrowFunctionExpression( [], expression, false ) ),
+								t.objectExpression( [
+									t.objectProperty( t.stringLiteral( typeof param === 'string' ? 'name' : 'index' ), typeof param === 'string' ? t.stringLiteral( param ) : t.numericLiteral( param ) ),
+									t.objectProperty( t.identifier( 'value' ), t.arrowFunctionExpression( [], expression, false ) ),
 							] )
 						]
-					)
 				)
 			)
 		)
@@ -73,29 +73,31 @@ const enableReactivity = ( { types: t }: any ) => {
 				const { openingElement: { attributes }, children } = path.node
 				const uid = random()
 
+				let forward = false
+
 				for ( let a in attributes ) {
-					const { name: { name }, value: { type, expression } } = attributes[ a ]
+					const { name: { name }, value: { type, expression } } = attributes[ a ], props = []
 					if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
-					let props: any = []
-					if ( expression?.type == 'MemberExpression' ) {
-						props = trvr( expression )
-					}
+					if ( expression?.type == 'MemberExpression' )  props.push( ...trvr( expression ) )
 					if ( props.length > 0 ) {
-						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'attributes', name ) ) )
+						forward = true
+						props.map( ( p: string ) => {
+							attributes.push( save( p, expression, uid, 'attributes', name ) )
+							attributes.push( t.jSXAttribute( t.jSXIdentifier( 'parent' ), t.jSXExpressionContainer( t.memberExpression( t.thisExpression( ), t.identifier( 'id' ) ) ) ) )
+							attributes.push( t.jSXAttribute( t.jSXIdentifier( `${name}-${p}` ), t.stringLiteral( '' ) ) )
+						} )
 					}
 				}
 
 				for ( let a in attributes ) {
-					const { name: { name }, value: { type, expression } } = attributes[ a ]
+					const { name: { name }, value: { type, expression } } = attributes[ a ], props = []
 					if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
-					let props: any = []
-					if ( expression?.type == 'TemplateLiteral' ) {
-						for ( let i in expression.expressions ) props = [ ...props, ...trvr( expression.expressions[ i ] ) ]
-					}
+					if ( expression?.type == 'TemplateLiteral' ) for ( let i in expression.expressions ) props.push( ...trvr( expression.expressions[ i ] ) )
 					if ( props.length > 0 ) {
-						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-						props.map( ( p: string ) => attributes.push( save( p, expression, uid, 'attributes', name ) ) )
+						forward = true
+						props.map( ( p: string ) => {
+							attributes.push( save( p, expression, uid, 'attributes', name ) )
+						} )
 					}
 				}
 
@@ -106,10 +108,9 @@ const enableReactivity = ( { types: t }: any ) => {
 
 				for ( let c in children ) {
 					const { type, expression } = children[ c ]
-					let props = [], cat = '', index = c
+					let props = [], cat = '', index = c, r = random()
 					if ( type != 'JSXExpressionContainer' ) continue
 					if ( expression?.type == 'CallExpression' && expression?.arguments[ 0 ].type == 'ArrowFunctionExpression' && expression?.callee.property.name == 'map' ) {
-						const r = random()
 						replaceFragment( expression.arguments[ 0 ].body )
 						expression.arguments[ 0 ].body.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
 						cat = 'iteration'
@@ -119,7 +120,6 @@ const enableReactivity = ( { types: t }: any ) => {
 						cat = 'children'
 						props = trvr( expression )
 					} else if ( expression?.type == 'ConditionalExpression' ) {
-						const r = random()
 						replaceFragment( expression.consequent )
 						replaceFragment( expression.alternate )
 						expression.consequent.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
@@ -128,17 +128,17 @@ const enableReactivity = ( { types: t }: any ) => {
 						props = trvr( expression )
 					}
 					if ( props.length > 0 ) {
-						attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
+						forward = true
 						props.map( ( p: string ) => attributes.push( save( p, expression, uid, cat, index ) ) )
 					}
 				}
+
+				if ( forward ) attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
+
 			}
 		}
 	}
 }
-
-const flogs = /\.(view|component).(js|jsx|ts|tsx)?$/
-const blogs = /\.(gateway|guard|service).(js|jsx|ts|tsx)?$/
 
 const log = ( regex: RegExp, stats: any ) => {
 	console.log( stats.toString( {
@@ -149,28 +149,24 @@ const log = ( regex: RegExp, stats: any ) => {
 }
 
 const fConfig: any = {
-  mode: 'development',
+  mode,
   entry: {
     index: [
 			'./node_modules/riser/dist/frontend/loader',
 			'./node_modules/riser/dist/frontend/runtime',
 		]
   },
-	stats: {
-		colors: true,
-		assets: false,
-		excludeModules: [ ( m: string ) => !flogs.test( m ) ]
-	},
-	infrastructureLogging: { level: 'error' },
 	target: 'web',
-  devtool: 'source-map',
   resolve: {
 		extensions: [ '.js', '.jsx', '.ts', '.tsx', '.css' ],
 	},
+	optimization: {
+    minimizer: [ new TerserPlugin( { extractComments: false } ) ],
+  },
 	module: {
 		rules: [ { 
 			test: /\.(js|jsx|ts|tsx)$/,
-			exclude: /node_modules/,
+			exclude: /node_modules\/(?!(riser)\/).*/,
 			use: {
 				loader: 'babel-loader',
 				options: {
@@ -180,7 +176,7 @@ const fConfig: any = {
 						[ '@babel/preset-react', { 'pragma': 'global.jsx.createElement', 'pragmaFrag': 'global.jsx.Fragment' } ]
 					],
 					plugins: [
-						[ '@babel/plugin-proposal-decorators', { 'legacy': true } ],
+						[ '@babel/plugin-proposal-decorators', { legacy: true } ],
 						[ enableReactivity ]
 					]
 				}
@@ -194,41 +190,42 @@ const fConfig: any = {
 		]
 	},
   plugins: [
-		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false, title: config.appname } ),
+		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false } ),
 		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.broker ) } )
   ],
   output: {
-    filename: 'index.js',
-    path: path.resolve( __dirname, 'dist' )
+    filename: '[name].js',
+		path: path.join( __dirname, '../../../dist' ),
   },
+	performance: {
+		hints: false,
+		maxEntrypointSize: 512000,
+		maxAssetSize: 512000
+	},
 }
 
 const bConfig: any = {
-	mode: 'development',
+	mode,
 	entry: {
 		main: [
-			'./node_modules/webpack/hot/poll?1000',
 			'./node_modules/riser/dist/backend/loader',
 			'./node_modules/riser/dist/backend/runtime',
 		]
 	},
 	target: 'node',
 	stats: 'none',
-	output: {
-		path: path.join( __dirname, '../../../dist' ),
-		filename: 'main.js',
-		hotUpdateChunkFilename: 'main.[fullhash].hot-update.js',
-		hotUpdateMainFilename: 'main.[fullhash].hot-update.json',
-	},
 	externals: [
 		nodeExternals()
 	],
 	resolve: {
-		extensions: [ '.js', '.jsx', '.ts', '.tsx' ],
+		extensions: [ '.js', '.ts' ],
 	},
+	optimization: {
+    minimizer: [ new TerserPlugin( { extractComments: false } ) ],
+  },
 	module: {
 		rules: [ { 
-			test: /\.(js|jsx|ts|tsx)$/,
+			test: /\.(js|ts)$/,
 			exclude: /node_modules/,
 			use: {
 				loader: 'babel-loader',
@@ -250,13 +247,28 @@ const bConfig: any = {
 		} ]
 	},
 	plugins: [
-		new webpack.HotModuleReplacementPlugin( ),
 		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.broker ) } )
-	]
+	],
+	output: {
+		path: path.join( __dirname, '../../../dist' ),
+		filename: '[name].js'
+	}
 }	
 
-if ( process.argv[ process.argv.length - 1 ] == 'dev' ) {
-	
+const flogs = /\.(view|component).(js|jsx|ts|tsx)?$/
+const blogs = /\.(gateway|guard|service).(js|ts)?$/
+
+if ( mode == 'development' ) {
+
+	fConfig.infrastructureLogging = { level: 'none' }
+	fConfig.devtool = 'source-map'
+	fConfig.stats = { colors: true, assets: false, excludeModules: [ ( m: string ) => !flogs.test( m ) ] }
+
+	bConfig.output.hotUpdateChunkFilename = 'main.[fullhash].hot-update.js'
+	bConfig.output.hotUpdateMainFilename = 'main.[fullhash].hot-update.json'
+	bConfig.entry.main.push( './node_modules/webpack/hot/poll?1000' )
+	bConfig.plugins.push( new webpack.HotModuleReplacementPlugin( ) )
+
 	const fCompiler = webpack( fConfig )
 
 	new webpackDevServer( { hot: true, client: { logging: 'none' }, liveReload: true, port: config.development.port, historyApiFallback: true }, fCompiler ).start( )

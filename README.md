@@ -19,6 +19,7 @@
 - Parameter decorator to extract route url parameter
 
 ```typescript
+// example.view.tsx
 import { View, Parameter } from 'riser'
 
 @View( '/example' )
@@ -44,21 +45,21 @@ export class ExampleView {
 - Children as render argument
 
 ```typescript
-import { Component, Property, State, Initiate, Children } from 'riser'
+// example.component.tsx
+import { Component, Property, State, Children } from 'riser'
 
 @Component( )
 export class ExampleComponent {
+
+  onMount( ) {
+    Logger( 'Example Component!' )
+  }
 
   @State( )
   text: string
 
   @Property( )
   onClick: any
-
-  @Initiate( )
-  onInit( ) {
-    Logger( 'Example Component!' )
-  }
 
   render( children: Children ) {
     return (
@@ -79,6 +80,7 @@ export class ExampleComponent {
 - Publish method websocket event send
 
 ```typescript
+// example.view.tsx
 import { View, Navigate, Subscribe, Publish, Logger } from 'riser'
 
 @View( '/example' )
@@ -104,6 +106,7 @@ export class ExampleView {
 - Broadcast websocket send event to multiple clients
 
 ```typescript
+// example.gateway.ts
 import { Gateway, Request, Response, Broadcast, Logger } from 'riser'
 
 @Gateway( '/example' )
@@ -125,6 +128,20 @@ export class ExampleGateway {
 - Initiate autoexecute method
 
 ```typescript
+// example.service.ts
+import { Service, Initiate } from 'riser'
+
+@Service( )
+export class ExampleService {
+
+  @Initiate( )
+  connect( ) {
+    // handle database connection
+  }
+
+}
+
+// example.gateway.ts
 import { Gateway, Inject } from 'riser'
 import { ExampleService } from './example.service.ts'
 
@@ -133,18 +150,6 @@ export class ExampleGateway {
 
   @Inject( )
   service: ExampleService
-
-}
-
-import { Service, Initiate } from 'riser'
-
-@Service( )
-export class ExampleService {
-
-  @Boot( )
-  connect( ) {
-    // handle database connection
-  }
 
 }
 ```
@@ -156,18 +161,7 @@ export class ExampleService {
 
 
 ```typescript
-import { Gateway, Expose, Request } from 'riser'
-
-@Gateway( '/example' )
-export class ExampleGateway {
-
-  @Expose( )
-  @Request( '/create' )
-  onCreate( { client, message }: Request ): void {
-  }
-
-}
-
+// example.guard.ts
 import { Guard, Intercept } from 'riser'
 
 @Guard( )
@@ -179,12 +173,26 @@ export class ExampleGuard {
   }
 
 }
+
+// example.gateway.ts
+import { Gateway, Expose, Request } from 'riser'
+
+@Gateway( '/example' )
+export class ExampleGateway {
+
+  @Expose( )
+  @Request( '/create' )
+  onCreate( { client, message }: Request ): void {
+  }
+
+}
 ```
 
 #### Utility
 - Logger decorator optionally can log arguments and/or returns
 
 ```typescript
+// example.gateway.ts
 import { Gateway, Request, Response, Logger } from 'riser'
 
 @Gateway( '/example' )
@@ -200,20 +208,22 @@ export class ExampleGateway {
 ```
 
 #### Configuration
-- Config file
 
-```json
-{
-  "appname": "example",
-  "development": {
-    "port": 3000
-  },
-  "broker": {
-    "name": "mqtt",
-    "host": "localhost",
-    "port": 9001,
-    "username": "root",
-    "password": "root"
+```js
+// riser.config.js
+module.exports = ( mode ) => {
+  return {
+    appname: 'test',
+    development: {
+      port: 3000
+    },
+    broker: {
+      name: 'mqtt',
+      host: 'localhost',
+      port: 9001,
+      username: 'root',
+      password: 'root'
+    }
   }
 }
 ```

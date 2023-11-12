@@ -1,4 +1,4 @@
-import { Component, Property } from '../core'
+import { Component, Property } from 'riser'
 
 @Component( )
 export class Input {

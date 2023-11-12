@@ -1,4 +1,202 @@
 import { connect } from 'mqtt/dist/mqtt.min'
+import { random } from '../utils'
+
+const storages = {}
+
+const getIndex = ( childs: any, index: any ) => {
+	let uid: string = '', last = Number( index )
+	for ( let i in childs ) {
+		if ( Number( i ) > last ) break
+		if ( childs[ i ] instanceof HTMLElement && childs[ i ].attributes.length > 0 && childs[ i ].getAttributeNames( )[ 0 ].length == 10 ) {
+			const id = childs[ i ].getAttributeNames( )[ 0 ]
+			if ( uid == id ) {
+				last += 1
+			} else {
+				uid = id
+			}
+		}
+	}
+	return last.toString( )
+}
+
+const update = ( elements: any ) => {
+	for ( let id in elements ) {
+		const element: any = document.querySelector( `[${id}]` )
+
+		if ( !element ) continue
+
+		for ( let type in elements[ id ] ) {
+			if ( type == 'iteration' ) {
+
+				for ( let index in elements[ id ][ type ] ) {
+
+					const n: any = document.querySelectorAll( `[${index.substring( 2 )}]` )
+					let prev: any, next: any
+					
+					if ( n.length != 0 ) {
+						prev = n[ 0 ].previousElementSibling
+						next = n[ n.length - 1 ].nextElementSibling
+						for ( let e of n ) e.parentNode.removeChild( e )
+					}
+
+					const els = elements[ id ][ type ][ index ]()
+
+					if ( els.length == 0 ) continue 
+
+					if ( element.childNodes.length == 0 ) {
+						for ( let e of els ) element.appendChild( e )
+						continue
+					}
+
+					if ( n.length != 0 ) {
+						if ( prev ) {
+							for ( let e of els.reverse() ) element.insertBefore( e, prev.nextSibling )
+						} else if ( next ) {
+							for ( let e of els ) element.insertBefore( e, next )
+						}
+						continue
+					}
+					
+					for ( let e of els.reverse() ) element.insertBefore( e, element.childNodes[ getIndex( element.childNodes, index[ 0 ] ) ] )
+				}
+
+			} else if ( type == 'children' ) {
+
+				for ( let index in elements[ id ][ type ] ) element.childNodes[ getIndex( element.childNodes, index ) ].replaceWith( elements[ id ][ type ][ index ]() )	
+				
+			} else if ( type == 'attributes' ) {
+
+				for ( let name in elements[ id ][ type ] ) element.setAttribute( name, elements[ id ][ type ][ name ]() )
+
+			}
+	
+		}
+	}
+}
+
+const constructor = ( { element, attributes, children } ) => {
+
+	let uid = random( ), render, obj = new element( attributes )
+	obj.id = uid
+	storages[ uid ] = { instance: obj }
+
+	// STORAGE REACTIVITY
+	{
+		obj.append = ( prop: string, id: string, type: string, param: any ) => { ( ( ( storages[ uid ][ prop ] ??= {} )[ id ] ??= {} )[ type ] ??= {} )[ param.name ? param.name : param.index ] = param.value }
+	}
+
+	// DEFINE STATES
+	{
+		for ( let key in obj.__states__ ) {
+			let name = obj.__states__[ key ], handler
+
+			const onupdate = ( ) => {
+				update( storages[ uid ][ name ] )
+				if ( storages[ uid ][ name ]?.properties ) for ( let i in storages[ uid ][ name ].properties ) storages[ uid ][ name ].properties[ i ]( obj[ name ] )
+			}
+
+			if ( obj[ name ] instanceof Array ) {
+				handler = { get: ( target: any, property: string ) => [ 'push', 'unshift' ].includes( property ) ? ( value: any ) => { target[ property ]( value ); onupdate( ) } : target[ property ] }
+			} else if ( obj[ name ] instanceof Object ) {
+				handler = { set: ( target: any, property: any, value: any ) => { target[ property ] = value; onupdate( ); return true } }
+			}
+
+			let value = handler ? new Proxy( obj[ name ], handler ) : obj[ name ]
+
+			Object.defineProperty( obj, name, { get: () => value, set: v => { value = handler ? new Proxy( v, handler ) : v; onupdate( ) } } )
+		}
+	}
+
+	// DEFINE PROPERTIES
+	{
+		for ( let property in obj.__properties__ ) {
+			let name = obj.__properties__[ property ], handler, parent, state
+			
+			if ( typeof attributes[ name ] == 'function' ) { obj[ name ] = attributes[ name ]; obj[ name ].bind( obj ); continue }
+	
+			if ( !attributes.hasOwnProperty( name ) ) continue
+
+			for ( let attr in attributes ) {
+				if ( attributes[ 'parent' ] ) parent = attributes[ 'parent' ]
+				if ( attr.startsWith( `${name}-`) ) state = attr.replace( `${name}-`, '' )
+			}
+
+			const onupdate = ( ) => {
+				if ( storages[ uid ] && storages[ uid ][ name ] ) update( storages[ uid ][ name ] )
+				if ( parent && state && storages[ parent ].instance[ state ] != obj[ name ] ) storages[ parent ].instance[ state ] = obj[ name ]
+			}
+
+			if ( attributes[ name ] instanceof Array ) {
+				handler = { get: ( target: any, property: string ) => [ 'push', 'unshift' ].includes( property ) ? ( value: any ) => { target[ property ]( value ); onupdate( ) } : target[ property ] }
+			} else if ( attributes[ name ] instanceof Object ) {
+				handler = { set: ( target: any, property: any, value: any ) => { target[ property ] = value; onupdate( ); return true } }
+			}
+
+			let value = attributes[ name ]
+	
+			Object.defineProperty( obj, name, { get: () => value, set: v => { value = v; onupdate( ) } } )
+
+			if ( parent && state ) ( storages[ parent ][ state ].properties ??= [] ).push( ( v => { if ( obj[ name ] != v ) obj[ name ] = v } ) )
+		}
+	}
+
+	// DEFINE SUBSCRIPTIONS
+	// AQUI ABAJO ESTA PARA HACER SUbSCRIBE DIRECTO
+	{
+		for ( let key in obj.__subscriptions__ ) ( global as any ).subscribe( key, obj[ obj.__subscriptions__[ key ] ] )
+	}
+
+	// RUN ONMOUNT METHOD
+	{
+		if ( obj.onMount ) obj.onMount( )
+	}
+
+	// REDEFINE IDS
+	{
+		render = obj.render( children )
+		const recursion = ( element: HTMLElement ) => {
+			const attrs = element.getAttributeNames( )
+			for ( let attr of attrs ) {
+				if ( attr.length != 10 ) continue
+				for ( let prop in storages[ uid ] ) {
+					for ( let id in storages[ uid ][ prop ] ) {
+						if ( id != attr ) continue
+						const newId = random( )
+						element.removeAttribute( attr )
+						element.setAttribute( newId, '' )
+						storages[ uid ][ prop ][ newId ] = storages[ uid ][ prop ][ id ]
+						delete storages[ uid ][ prop ][ id ]
+					}
+				}
+			}
+			for ( let child of element.childNodes ) {
+				if ( child instanceof HTMLElement ) recursion( child )
+			}
+		}
+		recursion( render )
+	}
+
+	// DEBUGING PURPUSES
+	{
+		render.setAttribute( obj.__name__, '' )
+	}
+
+	// TRY TO BIND
+	{
+		//for ( let i of Object.getOwnPropertyNames( obj ) ) { if ( typeof obj[ i ] === 'function' ) console.log() }
+	}
+
+	// RUN ONUNMOUNT AND CLEAN UP
+	{
+		setTimeout( ( ) => {
+			new MutationObserver( function ( ) {
+				if ( !document.body.contains( render ) ) { if ( obj?.onUnmount ) obj.onUnmount( ); delete storages[ uid ]; obj = null; this.disconnect( ) }
+			} ).observe( render.parentElement, { childList: true } )
+		} )
+	}
+
+	return render
+}
 
 const addAttributes = ( elem: any, attrs: any ) => {
 	if ( attrs === null || attrs === undefined ) attrs = {}
@@ -36,18 +234,10 @@ const appendChild = ( elem: any, children: any ) => {
 
 const createElement = ( elem: any, attributes: any, ...children: any ) => {
 	if ( typeof elem === 'function' ) {
-		if ( elem.name === 'Fragment' ) { 
-			return elem( { children } ) 
+		if ( elem.name !== 'Fragment' ) {
+			return constructor( { element: elem, attributes, children } )
 		} else {
-			// view && component && interface
-
-			// pasar this o C a todos los children o en el runtime enviar el this como argumento deberia ser como attribute parent
-			// loop de todos los children y verificar qeu alguno sea un component?
-			const element = document.createElement( 'div' )
-			const c = new elem( { attributes, element, children } )
-			element.setAttribute( `${c.element}`, '' )
-			element.appendChild( c.render( children ) )
-			return element
+			return elem( { children } ) 
 		}
 	} else {
 		const element = document.createElement( elem )
@@ -71,7 +261,7 @@ declare var broker: any
 
 const network = connect( `ws://${location.hostname}:${broker.port}`, { username: broker.username, password: broker.password } );
 
-let client = localStorage.getItem( 'client' ) ?  localStorage.getItem( 'client' ) : Math.random().toString( 36 ).slice( -9 )
+let client = localStorage.getItem( 'client' ) ? localStorage.getItem( 'client' ) : Math.random().toString( 36 ).slice( -9 )
 
 const backup: any = {}
 let subscribers: any = {};
@@ -137,8 +327,11 @@ window.onpopstate = ( ) => {
 
 const log = console.log
 console.log = function( ...args ) {
-	log.call( this, ...args.map( ( arg ) => {
-		if ( arg instanceof Array ) return [ ...arg ]
-		return arg
+	log.call( this, ...args.map( v => {
+		if ( v instanceof Array ) return [ ...v ]
+		else if ( v instanceof Object ) return { ...v }
+		else return v
 	} ) )
 }
+
+
