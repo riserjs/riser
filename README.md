@@ -39,7 +39,7 @@ export class ExampleView {
 
 #### Component
 - Component decorator to enable component
-- onMount and Unmount callbacks
+- onMount and onUnmount callbacks
 - State decorator like useState without set method
 - Property decorator like react props
 - Children as render argument
