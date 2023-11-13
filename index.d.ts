@@ -22,7 +22,6 @@ declare module 'riser' {
   export function Expose( )
   export function View( path: string )
   export function Component( )
-  export function Initiate( )
   export function Navigate( path: string )
   export function Publish( path: string, message: any )
   export function Subscribe( path: string )

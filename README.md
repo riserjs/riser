@@ -39,7 +39,7 @@ export class ExampleView {
 
 #### Component
 - Component decorator to enable component
-- Initiate event like useEffect hook
+- onMount and Unmount callbacks
 - State decorator like useState without set method
 - Property decorator like react props
 - Children as render argument
@@ -52,7 +52,11 @@ import { Component, Property, State, Children } from 'riser'
 export class ExampleComponent {
 
   onMount( ) {
-    Logger( 'Example Component!' )
+    Logger( 'Mount Component!' )
+  }
+
+  onUnmount( ) {
+    Logger( 'Unmount Component!' )
   }
 
   @State( )
@@ -104,6 +108,7 @@ export class ExampleView {
 - Request decorator websocket listen event callback with secondary path
 - Response websocket method send to request client
 - Broadcast websocket send event to multiple clients
+- onBoot autoexecute method
 
 ```typescript
 // example.gateway.ts
@@ -111,6 +116,10 @@ import { Gateway, Request, Response, Broadcast, Logger } from 'riser'
 
 @Gateway( '/example' )
 export class ExampleGateway {
+
+  onBoot( ) {
+    Logger( 'On Boot Example Gateway!' )
+  }
 
   @Logger( 'out' )
   @Request( '/create' )
@@ -125,20 +134,13 @@ export class ExampleGateway {
 #### Service
 - Service decorator auto instance
 - Inject decorator for service dependecy injection
-- Initiate autoexecute method
 
 ```typescript
 // example.service.ts
-import { Service, Initiate } from 'riser'
+import { Service } from 'riser'
 
 @Service( )
 export class ExampleService {
-
-  @Initiate( )
-  connect( ) {
-    // handle database connection
-  }
-
 }
 
 // example.gateway.ts

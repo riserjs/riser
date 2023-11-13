@@ -30,7 +30,7 @@ const update = ( elements: any ) => {
 
 				for ( let index in elements[ id ][ type ] ) {
 
-					const n: any = document.querySelectorAll( `[${index.substring( 2 )}]` )
+					const n: any = document.querySelectorAll( `[${index.split( '-' )[ 1 ]}]` )
 					let prev: any, next: any
 					
 					if ( n.length != 0 ) {
@@ -57,7 +57,7 @@ const update = ( elements: any ) => {
 						continue
 					}
 					
-					for ( let e of els.reverse() ) element.insertBefore( e, element.childNodes[ getIndex( element.childNodes, index[ 0 ] ) ] )
+					for ( let e of els.reverse() ) element.insertBefore( e, element.childNodes[ getIndex( element.childNodes, index.split( '-' )[ 0 ] ) ] )
 				}
 
 			} else if ( type == 'children' ) {
@@ -112,7 +112,7 @@ const constructor = ( { element, attributes, children } ) => {
 		for ( let property in obj.__properties__ ) {
 			let name = obj.__properties__[ property ], handler, parent, state
 			
-			if ( typeof attributes[ name ] == 'function' ) { obj[ name ] = attributes[ name ]; obj[ name ].bind( obj ); continue }
+			if ( typeof attributes[ name ] == 'function' ) { obj[ name ] = attributes[ name ]; continue }
 	
 			if ( !attributes.hasOwnProperty( name ) ) continue
 
@@ -140,15 +140,18 @@ const constructor = ( { element, attributes, children } ) => {
 		}
 	}
 
+	// DEFINE PARAMETERS
+	{
+		for ( let key in obj.__parameters__ ) {
+			let name = obj.__parameters__[ key ]
+			if ( attributes.hasOwnProperty( name ) ) obj[ name ] = attributes[ name ]
+		}
+	}
+
 	// DEFINE SUBSCRIPTIONS
 	// AQUI ABAJO ESTA PARA HACER SUbSCRIBE DIRECTO
 	{
 		for ( let key in obj.__subscriptions__ ) ( global as any ).subscribe( key, obj[ obj.__subscriptions__[ key ] ] )
-	}
-
-	// RUN ONMOUNT METHOD
-	{
-		if ( obj.onMount ) obj.onMount( )
 	}
 
 	// REDEFINE IDS
@@ -157,6 +160,9 @@ const constructor = ( { element, attributes, children } ) => {
 		const recursion = ( element: HTMLElement ) => {
 			const attrs = element.getAttributeNames( )
 			for ( let attr of attrs ) {
+				if ( attr == 'parent' ) { element.removeAttribute( attr ); continue }
+				if ( attr.indexOf( '-' ) !== -1 ) { element.removeAttribute( attr ); continue }
+
 				if ( attr.length != 10 ) continue
 				for ( let prop in storages[ uid ] ) {
 					for ( let id in storages[ uid ][ prop ] ) {
@@ -174,6 +180,11 @@ const constructor = ( { element, attributes, children } ) => {
 			}
 		}
 		recursion( render )
+	}
+
+	// RUN ONMOUNT METHOD
+	{
+		if ( obj.onMount ) obj.onMount( )
 	}
 
 	// DEBUGING PURPUSES

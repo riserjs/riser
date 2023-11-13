@@ -6,7 +6,7 @@ export const View = ( path: string ) => ( target: any ) => ( ( global as any ).v
 
 export const Parameter = ( ) => ( target: any, key: string ) => { ( target.__parameters__ ??= [] ).push( key ) }
 
-export const Component = () => ( target: any ) => component( target, Object.getOwnPropertyNames( target.prototype ).filter( item => ![ 'constructor', 'render', '__subscriptions__', '__states__', '__properties__', '__initiates__' ].includes( item ) ) )
+export const Component = () => ( target: any ) => component( target, Object.getOwnPropertyNames( target.prototype ).filter( item => ![ 'constructor', 'render', '__subscriptions__', '__states__', '__properties__' ].includes( item ) ) )
 
 export const State = ( ) => ( target: any, key: string ) => { ( target.__states__ ??= [] ).push( key ) }
 
@@ -34,8 +34,6 @@ export const Broadcast = ( { clients, path, message }: any ) => { for ( let i in
 export const Client = ( value: string ) => ( global as any ).client( value )
 
 // UTILITY
-export const Initiate = ( ) => ( target: any, key: string ) => { ( target.__initiates__ ??= [] ).push( key ) }
-
 export const Navigate = ( path: string ) => ( global as any ).router( path )
 
 export const Logger = ( type?: string ) => {
