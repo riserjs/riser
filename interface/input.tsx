@@ -1,4 +1,5 @@
-import { Component, Property } from 'riser'
+// @ts-ignore
+import { Component, Property } from '../../riser'
 
 @Component( )
 export class Input {
@@ -9,14 +10,14 @@ export class Input {
 	@Property( )
 	value: string
 
-	render( ) {		
+	render( ) {
   	return (
 			<input
-				type="text"
+				type={ 'text' }
 				placeholder={ this.placeholder }
-				class="py-2 px-2 text-md border focus:outline-none rounded"
-				//value={ this.value }
-				onKeyUp={ ( event: any ) => this.value = event.target.value }
+				class={ 'py-100 px-2 text-md border focus:outline-none rounded' }
+				value={ this.value }
+				onkeyup={ ( event: any ) => this.value = event.target.value }
 			/>
   	)
 	}

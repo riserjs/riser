@@ -13,19 +13,21 @@ const mode = process.argv[ process.argv.length - 1 ] == 'dev' ? 'development' : 
 
 const config = __non_webpack_require__( '../../../riser.config.js' )( mode )
 
-const trvr = ( target: any ) => {
+const recursion = ( target: any ) => {
 	let props: any = []
-  for ( let key in target ) {
-		if ( target[ key ]?.type == 'ThisExpression' ) {
-			if ( !props.includes( target.property.name && !target.property.name.startsWith( 'on' ) ) ) props.push( target.property.name )
-		} else if ( key == 'expressions' ) {
-			for ( let i in target[ key ] ) {
-				for ( let e of trvr( target[ key ][ i ] ) ) if ( !props.includes( e ) && !e.startsWith( 'on' ) ) props.push( e )
+
+	for ( let key in target ) {
+		if ( target[ key ]?.type == 'ThisExpression' && !props.includes( target.property.name ) ) {
+			props.push( target.property.name )
+			if ( target.property.name == 'input' ) {
+				//console.log(target)
 			}
-		} else if ( typeof target[ key ] === 'object' ) {
-			for ( let i of trvr( target[ key ] ) ) if ( !props.includes( i ) && !i.startsWith( 'on' ) ) props.push( i )
-    }
-  }
+		} else if ( target[ key ] instanceof Object ) {
+			for ( let e of recursion( target[ key ] ) ) if ( !props.includes( e ) ) props.push( e )
+		} 
+	}
+
+
 	return props
 }
 
@@ -62,12 +64,55 @@ const enableReactivity = ( { types: t }: any ) => {
 		)
 	}
 
+	const attrs = ( path ) => {
+		const { openingElement: { attributes }, children } = path.node
+		const uid = random()
+
+		let forward = false
+
+		for ( let a in attributes ) {
+			let { name: { name }, value: { type, expression } } = attributes[ a ], props = []
+			if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
+			if ( expression?.type == 'MemberExpression' ) props = recursion( expression )
+			if ( props.length > 0 ) {
+				forward = true
+				props.map( ( p: string ) => {
+					attributes.push( save( p, expression, uid, 'attributes', name ) )
+					attributes.push( t.jSXAttribute( t.jSXIdentifier( 'parent' ), t.jSXExpressionContainer( t.memberExpression( t.thisExpression( ), t.identifier( 'id' ) ) ) ) )
+					attributes.push( t.jSXAttribute( t.jSXIdentifier( `${name}-${p}` ), t.stringLiteral( '' ) ) )
+					console.log(p, name)
+				} )
+			}
+		}
+
+		for ( let a in attributes ) {
+			const { name: { name }, value: { type, expression } } = attributes[ a ], props = []
+			if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
+			if ( expression?.type == 'TemplateLiteral' ) for ( let i in expression.expressions ) props.push( ...recursion( expression.expressions[ i ] ) )
+			if ( props.length > 0 ) {
+				forward = true
+				props.map( ( p: string ) => {
+					attributes.push( save( p, expression, uid, 'attributes', name ) )
+				} )
+			}
+		}
+	}
+
 	return {
 		visitor: {
 			JSXFragment( path: any ) {
 				path.replaceWith(
 					t.jSXElement( t.jSXOpeningElement( t.jSXIdentifier( 'div' ), [] ), t.jSXClosingElement( t.jSXIdentifier( 'div' ) ), path.node.children )
 				)
+			},
+			JSXAttribute( path ) {
+				const { name: { name }, value: { type, expression } } = path.node
+
+				if ( type == 'JSXExpressionContainer' && expression.type == 'MemberExpression' ) {
+					//console.log( name, expression )
+
+				}
+
 			},
 			JSXElement( path: any ) {
 				const { openingElement: { attributes }, children } = path.node
@@ -76,23 +121,21 @@ const enableReactivity = ( { types: t }: any ) => {
 				let forward = false
 
 				for ( let a in attributes ) {
-					const { name: { name }, value: { type, expression } } = attributes[ a ], props = []
+					let { name: { name }, value: { type, expression } } = attributes[ a ]
 					if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
-					if ( expression?.type == 'MemberExpression' )  props.push( ...trvr( expression ) )
-					if ( props.length > 0 ) {
+					if ( expression?.type == 'MemberExpression' && ( expression.object.type == 'ThisExpression' || expression.object.name == '_this' )  ) {
 						forward = true
-						props.map( ( p: string ) => {
-							attributes.push( save( p, expression, uid, 'attributes', name ) )
-							attributes.push( t.jSXAttribute( t.jSXIdentifier( 'parent' ), t.jSXExpressionContainer( t.memberExpression( t.thisExpression( ), t.identifier( 'id' ) ) ) ) )
-							attributes.push( t.jSXAttribute( t.jSXIdentifier( `${name}-${p}` ), t.stringLiteral( '' ) ) )
-						} )
+						attributes.push( save( expression.property.name, expression, uid, 'attributes', name ) )
+						attributes.push( t.jSXAttribute( t.jSXIdentifier( 'parent' ), t.jSXExpressionContainer( t.memberExpression( t.thisExpression( ), t.identifier( 'id' ) ) ) ) )
+						attributes.push( t.jSXAttribute( t.jSXIdentifier( `${name}-${expression.property.name}` ), t.stringLiteral( '' ) ) )
+						console.log(expression.property.name, name)
 					}
 				}
 
 				for ( let a in attributes ) {
 					const { name: { name }, value: { type, expression } } = attributes[ a ], props = []
 					if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
-					if ( expression?.type == 'TemplateLiteral' ) for ( let i in expression.expressions ) props.push( ...trvr( expression.expressions[ i ] ) )
+					if ( expression?.type == 'TemplateLiteral' ) for ( let i in expression.expressions ) props.push( ...recursion( expression.expressions[ i ] ) )
 					if ( props.length > 0 ) {
 						forward = true
 						props.map( ( p: string ) => {
@@ -114,18 +157,18 @@ const enableReactivity = ( { types: t }: any ) => {
 						replaceFragment( expression.arguments[ 0 ].body )
 						expression.arguments[ 0 ].body.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
 						cat = 'iteration'
-						props = trvr( expression )
+						props = recursion( expression )
 						index = `${c}-${r}`
 					} else if ( [ 'MemberExpression', 'TemplateLiteral', 'LogicalExpression' ].includes( expression?.type ) ) {
 						cat = 'children'
-						props = trvr( expression )
+						props = recursion( expression )
 					} else if ( expression?.type == 'ConditionalExpression' ) {
 						replaceFragment( expression.consequent )
 						replaceFragment( expression.alternate )
 						expression.consequent.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
 						expression.alternate.openingElement.attributes.unshift( t.jSXAttribute( t.jSXIdentifier( r ), t.stringLiteral( '' ) ) )
 						cat = 'children'
-						props = trvr( expression )
+						props = recursion( expression )
 					}
 					if ( props.length > 0 ) {
 						forward = true
@@ -164,29 +207,30 @@ const fConfig: any = {
     minimizer: [ new TerserPlugin( { extractComments: false } ) ],
   },
 	module: {
-		rules: [ { 
-			test: /\.(js|jsx|ts|tsx)$/,
-			exclude: /node_modules\/(?!(riser)\/).*/,
-			use: {
-				loader: 'babel-loader',
-				options: {
-					presets: [
-						[ '@babel/preset-env' ],
-						[ '@babel/typescript' ],
-						[ '@babel/preset-react', { 'pragma': 'global.jsx.createElement', 'pragmaFrag': 'global.jsx.Fragment' } ]
-					],
-					plugins: [
-						[ '@babel/plugin-proposal-decorators', { legacy: true } ],
-						[ enableReactivity ]
-					]
+		rules: [
+			{ 
+				test: /\.(js|jsx|ts|tsx)$/,
+				exclude: /node_modules\/(?!(riser)\/).*/,
+				use: {
+					loader: 'babel-loader',
+					options: {
+						presets: [
+							[ '@babel/preset-env' ],
+							[ '@babel/typescript' ],
+							[ '@babel/preset-react', { 'pragma': 'global.jsx.createElement', 'pragmaFrag': 'global.jsx.Fragment' } ]
+						],
+						plugins: [
+							[ '@babel/plugin-proposal-decorators', { legacy: true } ],
+							[ enableReactivity ]
+						]
+					}
 				}
+			},
+			{
+				test: /\.(png|ico)$/,
+				type: 'asset/resource',
+				generator: { filename: 'assets/[name][ext]' },
 			}
-		},
-		{
-			test: /\.(png|ico)$/,
-			type: 'asset/resource',
-			generator: { filename: 'assets/[name][ext]' },
-		},
 		]
 	},
   plugins: [

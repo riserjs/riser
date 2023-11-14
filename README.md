@@ -9,7 +9,7 @@
 - No disk cache in development mode
 - Built in tailwind
 - Frontend and backend compiled isolated
-- Reactivity enabled for states
+- Reactivity enabled for states and propeties
 - Method auto binding
 - Images can by directly imported
 

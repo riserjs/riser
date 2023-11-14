@@ -80,6 +80,8 @@ const constructor = ( { element, attributes, children } ) => {
 	obj.id = uid
 	storages[ uid ] = { instance: obj }
 
+	//console.log(obj.__name__,storages[uid], attributes)
+
 	// STORAGE REACTIVITY
 	{
 		obj.append = ( prop: string, id: string, type: string, param: any ) => { ( ( ( storages[ uid ][ prop ] ??= {} )[ id ] ??= {} )[ type ] ??= {} )[ param.name ? param.name : param.index ] = param.value }
@@ -108,6 +110,7 @@ const constructor = ( { element, attributes, children } ) => {
 	}
 
 	// DEFINE PROPERTIES
+	if ( obj.__name__ == 'Input') console.log(obj.__name__,obj.__properties__)
 	{
 		for ( let property in obj.__properties__ ) {
 			let name = obj.__properties__[ property ], handler, parent, state
@@ -118,13 +121,15 @@ const constructor = ( { element, attributes, children } ) => {
 
 			for ( let attr in attributes ) {
 				if ( attributes[ 'parent' ] ) parent = attributes[ 'parent' ]
-				if ( attr.startsWith( `${name}-`) ) state = attr.replace( `${name}-`, '' )
+				if ( attr.startsWith( `${name}-`) ) state = attr.split('-')[1]
 			}
 
 			const onupdate = ( ) => {
 				if ( storages[ uid ] && storages[ uid ][ name ] ) update( storages[ uid ][ name ] )
 				if ( parent && state && storages[ parent ].instance[ state ] != obj[ name ] ) storages[ parent ].instance[ state ] = obj[ name ]
 			}
+
+			//console.log( obj.__name__, storages[parent], state, name, attributes)
 
 			if ( attributes[ name ] instanceof Array ) {
 				handler = { get: ( target: any, property: string ) => [ 'push', 'unshift' ].includes( property ) ? ( value: any ) => { target[ property ]( value ); onupdate( ) } : target[ property ] }
@@ -162,7 +167,6 @@ const constructor = ( { element, attributes, children } ) => {
 			for ( let attr of attrs ) {
 				if ( attr == 'parent' ) { element.removeAttribute( attr ); continue }
 				if ( attr.indexOf( '-' ) !== -1 ) { element.removeAttribute( attr ); continue }
-
 				if ( attr.length != 10 ) continue
 				for ( let prop in storages[ uid ] ) {
 					for ( let id in storages[ uid ][ prop ] ) {

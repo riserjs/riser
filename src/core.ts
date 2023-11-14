@@ -1,12 +1,12 @@
 import 'reflect-metadata'
-import { component, gateway, service,guard, view } from './definitions'
+import { component, gateway, service, guard, view } from './definitions'
 
 // INTERFACE
 export const View = ( path: string ) => ( target: any ) => ( ( global as any ).views ??= {} )[ path ] = view( target )
 
 export const Parameter = ( ) => ( target: any, key: string ) => { ( target.__parameters__ ??= [] ).push( key ) }
 
-export const Component = () => ( target: any ) => component( target, Object.getOwnPropertyNames( target.prototype ).filter( item => ![ 'constructor', 'render', '__subscriptions__', '__states__', '__properties__' ].includes( item ) ) )
+export const Component = ( ) => ( target: any ) => component( target, Object.getOwnPropertyNames( target.prototype ).filter( item => ![ 'constructor', 'render', '__subscriptions__', '__states__', '__properties__' ].includes( item ) ) )
 
 export const State = ( ) => ( target: any, key: string ) => { ( target.__states__ ??= [] ).push( key ) }
 
