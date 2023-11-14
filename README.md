@@ -9,7 +9,7 @@
 - No disk cache in development mode
 - Built in tailwind
 - Frontend and backend compiled isolated
-- Reactivity enabled for states and propeties
+- Reactivity enabled for states and properties
 - Method auto binding
 - Images can by directly imported
 
@@ -231,5 +231,5 @@ module.exports = ( mode ) => {
 ```
 
 #### Future implementations
-- Layout shared to avoid rerendering on routing
-- Styled themes
+- Layouts system
+- Styles sytem

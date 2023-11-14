@@ -1,14 +1,15 @@
 // @ts-ignore
-import { Component, Property } from '../../riser'
+import { Component, Property, State } from '../../riser'
+import { random } from '../src/utils'
 
 @Component( )
 export class Input {
 
 	@Property( )
-	placeholder: string
+	placeholder: String = ''
 
 	@Property( )
-	value: string
+	value: String = ''
 
 	render( ) {
   	return (
@@ -17,7 +18,7 @@ export class Input {
 				placeholder={ this.placeholder }
 				class={ 'py-100 px-2 text-md border focus:outline-none rounded' }
 				value={ this.value }
-				onkeyup={ ( event: any ) => this.value = event.target.value }
+				oninput={( event: any ) => this.value = event.target.value }
 			/>
   	)
 	}

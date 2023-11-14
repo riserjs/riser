@@ -1,8 +1,9 @@
 
 export const component = ( target: any, methods ) => class Component extends target {
-	constructor( attributes ) {
+	constructor( attributes, uid ) {
 		super()
 
+		this.id = uid
 		// BIND METHODS
 		{
 			for ( let i in methods ) this[ methods[ i ] ] = this[ methods[ i ] ].bind( this )
@@ -56,9 +57,10 @@ export const guard = ( target: any ) => new class extends target {
 }
 
 export const view = ( target: any ) => class View extends target {
-	constructor( { attributes }: any ) {
+	constructor( { attributes }: any, uid ) {
 		super()
 
+		this.id = uid
 		this.__name__ = target.name
 	}
 }

@@ -11,6 +11,7 @@ if ( module.hot ) {
 	module.hot.accept( context.id, ( ) => {
 		load()
 		global.main()
+		
 	} )
 }
 

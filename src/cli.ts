@@ -19,14 +19,10 @@ const recursion = ( target: any ) => {
 	for ( let key in target ) {
 		if ( target[ key ]?.type == 'ThisExpression' && !props.includes( target.property.name ) ) {
 			props.push( target.property.name )
-			if ( target.property.name == 'input' ) {
-				//console.log(target)
-			}
 		} else if ( target[ key ] instanceof Object ) {
 			for ( let e of recursion( target[ key ] ) ) if ( !props.includes( e ) ) props.push( e )
 		} 
 	}
-
 
 	return props
 }
@@ -63,41 +59,7 @@ const enableReactivity = ( { types: t }: any ) => {
 			)
 		)
 	}
-
-	const attrs = ( path ) => {
-		const { openingElement: { attributes }, children } = path.node
-		const uid = random()
-
-		let forward = false
-
-		for ( let a in attributes ) {
-			let { name: { name }, value: { type, expression } } = attributes[ a ], props = []
-			if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
-			if ( expression?.type == 'MemberExpression' ) props = recursion( expression )
-			if ( props.length > 0 ) {
-				forward = true
-				props.map( ( p: string ) => {
-					attributes.push( save( p, expression, uid, 'attributes', name ) )
-					attributes.push( t.jSXAttribute( t.jSXIdentifier( 'parent' ), t.jSXExpressionContainer( t.memberExpression( t.thisExpression( ), t.identifier( 'id' ) ) ) ) )
-					attributes.push( t.jSXAttribute( t.jSXIdentifier( `${name}-${p}` ), t.stringLiteral( '' ) ) )
-					console.log(p, name)
-				} )
-			}
-		}
-
-		for ( let a in attributes ) {
-			const { name: { name }, value: { type, expression } } = attributes[ a ], props = []
-			if ( type != 'JSXExpressionContainer' || name.startsWith( 'on' ) || name == uid ) continue
-			if ( expression?.type == 'TemplateLiteral' ) for ( let i in expression.expressions ) props.push( ...recursion( expression.expressions[ i ] ) )
-			if ( props.length > 0 ) {
-				forward = true
-				props.map( ( p: string ) => {
-					attributes.push( save( p, expression, uid, 'attributes', name ) )
-				} )
-			}
-		}
-	}
-
+	
 	return {
 		visitor: {
 			JSXFragment( path: any ) {
@@ -107,12 +69,9 @@ const enableReactivity = ( { types: t }: any ) => {
 			},
 			JSXAttribute( path ) {
 				const { name: { name }, value: { type, expression } } = path.node
-
 				if ( type == 'JSXExpressionContainer' && expression.type == 'MemberExpression' ) {
 					//console.log( name, expression )
-
 				}
-
 			},
 			JSXElement( path: any ) {
 				const { openingElement: { attributes }, children } = path.node
@@ -128,7 +87,6 @@ const enableReactivity = ( { types: t }: any ) => {
 						attributes.push( save( expression.property.name, expression, uid, 'attributes', name ) )
 						attributes.push( t.jSXAttribute( t.jSXIdentifier( 'parent' ), t.jSXExpressionContainer( t.memberExpression( t.thisExpression( ), t.identifier( 'id' ) ) ) ) )
 						attributes.push( t.jSXAttribute( t.jSXIdentifier( `${name}-${expression.property.name}` ), t.stringLiteral( '' ) ) )
-						console.log(expression.property.name, name)
 					}
 				}
 
@@ -177,7 +135,6 @@ const enableReactivity = ( { types: t }: any ) => {
 				}
 
 				if ( forward ) attributes.unshift( t.jSXAttribute( t.jSXIdentifier( uid ), t.stringLiteral( '' ) ) )
-
 			}
 		}
 	}
