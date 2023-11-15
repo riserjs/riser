@@ -5,7 +5,25 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 import webpackDevServer from 'webpack-dev-server'
 import TerserPlugin from 'terser-webpack-plugin'
 import memfs from 'memfs'
+import fs from 'fs'
 import { random } from './utils'
+
+const compile = { frontend: false, backend: false }
+
+const enableCompilation = (directory) => {
+  for ( const file of fs.readdirSync( directory ) ) {
+    const absolute = path.join( directory, file )
+    if ( fs.statSync( absolute ).isDirectory( ) ) {
+      enableCompilation( absolute )
+    } else if ( absolute.endsWith( '.view.tsx' ) ) {
+			compile.frontend = true
+    } else if ( absolute.endsWith( '.gateway.ts' ) ) {
+			compile.backend = true
+    }
+  }
+}
+
+enableCompilation(`${__dirname}/../../../src` )
 
 declare var __non_webpack_require__: any
 
@@ -261,33 +279,40 @@ const blogs = /\.(gateway|guard|service).(js|ts)?$/
 
 if ( mode == 'development' ) {
 
-	fConfig.infrastructureLogging = { level: 'none' }
-	fConfig.devtool = 'source-map'
-	fConfig.stats = { colors: true, assets: false, excludeModules: [ ( m: string ) => !flogs.test( m ) ] }
+	if ( compile.frontend ) {
+		fConfig.infrastructureLogging = { level: 'none' }
+		fConfig.devtool = 'source-map'
+		fConfig.stats = { colors: true, assets: false, excludeModules: [ ( m: string ) => !flogs.test( m ) ] }
+		
+		const fCompiler = webpack( fConfig )
+		new webpackDevServer( { hot: true, client: { logging: 'none' }, liveReload: true, port: config.development.port, historyApiFallback: true }, fCompiler ).start( )
+	}
 
-	bConfig.output.hotUpdateChunkFilename = 'main.[fullhash].hot-update.js'
-	bConfig.output.hotUpdateMainFilename = 'main.[fullhash].hot-update.json'
-	bConfig.entry.main.push( './node_modules/webpack/hot/poll?1000' )
-	bConfig.plugins.push( new webpack.HotModuleReplacementPlugin( ) )
+	if ( compile.backend ) {
+		bConfig.output.hotUpdateChunkFilename = 'main.[fullhash].hot-update.js'
+		bConfig.output.hotUpdateMainFilename = 'main.[fullhash].hot-update.json'
+		bConfig.entry.main.push( './node_modules/webpack/hot/poll?1000' )
+		bConfig.plugins.push( new webpack.HotModuleReplacementPlugin( ) )
 
-	const fCompiler = webpack( fConfig )
-
-	new webpackDevServer( { hot: true, client: { logging: 'none' }, liveReload: true, port: config.development.port, historyApiFallback: true }, fCompiler ).start( )
-
-	const bCompiler: any = webpack( bConfig )
-	bCompiler.outputFileSystem = memfs
-	bCompiler.watch( { }, ( err: any, stats: any ) => {
-		log( blogs, stats )
-		if ( ( global as any ).disconnect ) ( global as any ).disconnect( )
-		eval( bCompiler.outputFileSystem.readFileSync( `${bConfig.output.path}/main.js` ).toString( ) )
-	} )
-
+		const bCompiler: any = webpack( bConfig )
+		bCompiler.outputFileSystem = memfs
+		bCompiler.watch( { }, ( err: any, stats: any ) => {
+			log( blogs, stats )
+			if ( ( global as any ).disconnect ) ( global as any ).disconnect( )
+			eval( bCompiler.outputFileSystem.readFileSync( `${bConfig.output.path}/main.js` ).toString( ) )
+		} )
+	}
+	
 } else {
 
-	const fCompiler = webpack( fConfig )
-	fCompiler.run( ( err, stats ) => log( flogs, stats ) )
+	if ( compile.frontend ) {
+		const fCompiler = webpack( fConfig )
+		fCompiler.run( ( err, stats ) => log( flogs, stats ) )
+	}
 
-	const bCompiler = webpack( bConfig )
-	bCompiler.run( ( err, stats ) => log( blogs, stats ) )
-	
+	if ( compile.backend ) {
+		const bCompiler = webpack( bConfig )
+		bCompiler.run( ( err, stats ) => log( blogs, stats ) )
+	}
+
 }

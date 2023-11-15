@@ -18,7 +18,7 @@ export class Input {
 				placeholder={ this.placeholder }
 				class={ 'py-100 px-2 text-md border focus:outline-none rounded' }
 				value={ this.value }
-				oninput={( event: any ) => this.value = event.target.value }
+				oninput={ ( event: any ) => this.value = event.target.value }
 			/>
   	)
 	}
