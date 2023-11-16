@@ -231,5 +231,7 @@ module.exports = ( mode ) => {
 ```
 
 #### Future implementations
-- Layouts system
-- Styles sytem
+- Layout system
+- Style sytem
+- Mongodb odm layer
+- Observable pattern

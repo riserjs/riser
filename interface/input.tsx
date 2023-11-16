@@ -1,6 +1,5 @@
 // @ts-ignore
-import { Component, Property, State } from '../../riser'
-import { random } from '../src/utils'
+import { Component, Property } from '../../riser'
 
 @Component( )
 export class Input {

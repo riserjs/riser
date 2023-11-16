@@ -1,6 +1,8 @@
 import { connect } from 'mqtt/dist/mqtt.min'
 import { random, recursivelyRemove } from '../utils'
 
+declare var broker: any
+
 ( global as any ).storages = {}
 
 const getIndex = ( childs: any, index: any ) => {
@@ -99,7 +101,13 @@ const constructor = ( { element, attributes, children } ) => {
 			}
 
 			if ( ( global as any ).storages[ uid ].instance[ name ] instanceof Array ) {
-				handler = { get: ( target: any, property: string ) => [ 'push', 'unshift' ].includes( property ) ? ( value: any ) => { target[ property ]( value ); onupdate( ) } : target[ property ] }
+				let timeout
+				handler = { get: ( target: any, property: string ) => {
+					//if ( [ 'push', 'unshift', 'pop', 'shift', 'splice' ].includes( property ) ) clearTimeout( timeout ); timeout = setTimeout( ( ) => { onupdate( ); clearTimeout( timeout ) }, 10 )
+					if ( [ 'push', 'unshift', 'pop', 'shift', 'splice' ].includes( property ) ) return ( value: any ) => { target[ property ]( value ); onupdate( ) }
+					return target[ property ]
+				} }
+
 			} else if ( ( global as any ).storages[ uid ].instance[ name ] instanceof Object ) {
 				handler = { set: ( target: any, property: any, value: any ) => { target[ property ] = value; onupdate( ); return true } }
 			}
@@ -154,7 +162,7 @@ const constructor = ( { element, attributes, children } ) => {
 	// DEFINE SUBSCRIPTIONS
 	// AQUI ABAJO ESTA PARA HACER SUbSCRIBE DIRECTO
 	{
-		for ( let key in ( global as any ).storages[ uid ].instance.__subscriptions__ ) ( global as any ).subscribe( key, ( global as any ).storages[ uid ].instance[ ( global as any ).storages[ uid ].instance.__subscriptions__[ key ] ] )
+		for ( let key in ( global as any ).storages[ uid ].instance.__subscriptions__ ) ( global as any ).subscribe( key, ( global as any ).storages[ uid ].instance[ ( global as any ).storages[ uid ].instance.__subscriptions__[ key ] ], uid )
 	}
 
 	// RENDERING
@@ -273,41 +281,39 @@ const Fragment = ( { children }: any ) => {
 
 const getUrlParams = () => Object.fromEntries( new URLSearchParams( location.search ) )
 
-declare var broker: any
-
-const network = connect( `ws://${location.hostname}:${broker.port}`, { username: broker.username, password: broker.password } );
+let network = connect( `ws://${location.hostname}:${broker.port}`, { username: broker.username, password: broker.password } );
 
 let client = localStorage.getItem( 'client' ) ? localStorage.getItem( 'client' ) : Math.random().toString( 36 ).slice( -9 )
 
-const backup: any = {}
-let subscribers: any = {};
+const subscribers = {};
 
 ( global as any ).client = ( value: string ) => {
 	if ( localStorage.getItem( 'client' ) == value ) return
 	localStorage.setItem( 'client', value )
+	client = value
 
-	for ( let i in subscribers ) network.unsubscribe( i )
-	subscribers = {}
-
-	for ( let i in backup ) {
-		subscribers[ `${i}-${value}` ] = backup[ i ]
-		network.subscribe( `${i}-${value}` )
+	for ( let i in subscribers ) {
+		network.unsubscribe( i )
+		network.subscribe( `${subscribers[ i ].path}-${value}` )
+		subscribers[ `${subscribers[ i ].path}-${value}` ] = subscribers[ i ]
+		delete subscribers[ i ]
 	}
 }
 
-network.on( 'message', ( path: string, message: any ) => {
-	if ( subscribers.hasOwnProperty( path ) ) subscribers[ path ]( JSON.parse( message.toString( ) ) )
+network.on( 'message', ( path: string, message: Buffer ) => {
+	if ( subscribers.hasOwnProperty( path ) && ( global as any ).storages[ subscribers[ path ].uid ] ) subscribers[ path ].callback( JSON.parse( message.toString( ) ) )
 } );
 
-( global as any ).subscribe = ( path: string, callback: any ) => {
-	backup[ path ] = callback
-	subscribers[ `${path}-${client}` ] = callback
+( global as any ).subscribe = ( path: string, callback: any, uid: string ) => {
+	subscribers[ `${path}-${client}` ] = { path, callback, uid }
 	network.subscribe( `${path}-${client}` )
 }
 
 ( global as any ).publish = ( path: string, message: any ) => {
 	network.publish( path, JSON.stringify( { client, message } ) )
 }
+
+( global as any ).disconnect = ( ) => network.end()
 
 window.onpopstate = ( ) => {
 	const Element = ( global as any ).views[ location.pathname ]
