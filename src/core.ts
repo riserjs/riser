@@ -1,25 +1,25 @@
 import 'reflect-metadata'
-import { component, gateway, service, guard, view } from './definitions'
+import { component, gateway, service, guard, view, storage } from './definitions'
 
 // INTERFACE
-export const View = ( path: string ) => ( target: any ) => ( ( global as any ).views ??= {} )[ path ] = view( target )
+export const View = ( path: string ) => ( target: any ) => ( global.views ??= {} )[ path ] = view( target )
 
 export const Parameter = ( ) => ( target: any, key: string ) => { ( target.__parameters__ ??= [] ).push( key ) }
 
-export const Component = ( ) => ( target: any ) => component( target, Object.getOwnPropertyNames( target.prototype ).filter( item => ![ 'constructor', 'render', '__subscriptions__', '__states__', '__properties__' ].includes( item ) ) )
+export const Component = ( ) => ( target: any ) => component( target, Object.getOwnPropertyNames( target.prototype ).filter( item => ![ 'constructor', 'render', '__subscriptions__', '__states__', '__properties__', '__observables__', '__injection__' ].includes( item ) ) )
 
 export const State = ( ) => ( target: any, key: string ) => { ( target.__states__ ??= [] ).push( key ) }
 
 export const Property = ( ) => ( target: any, key: string ) => { ( target.__properties__ ??= [] ).push( key ) }
 
 // NETWORK
-export const Gateway = ( path: string ) => ( target: any ) => { ( ( global as any ).gateway ??= {} )[ path ] = gateway( path, target ) }
+export const Gateway = ( path: string ) => ( target: any ) => { ( global.gateway ??= {} )[ path ] = gateway( path, target ) }
 
 export const Request = ( path: string ) => ( target: any, key: string ) => { ( target.__requests__ ??= {} )[ path ] = key }
 
 export const Response = ( path: string, message: any ) => { return { path, message } }
 
-export const Guard = ( ) => ( target: any ) => ( ( global as any ).guards ??= {} )[ target.name ] = guard( target )
+export const Guard = ( ) => ( target: any ) => ( global.guards ??= {} )[ target.name ] = guard( target )
 
 export const Intercept = ( ) => ( target: any, key: string ) => { ( target.intercepts ??= [] ).push( key ) }
 
@@ -27,14 +27,14 @@ export const Expose = ( ) => ( target: any, key: string ) => { ( target.__expose
 
 export const Subscribe = ( path: string ) => ( target: any, key: string ) => { ( target.__subscriptions__ ??= {} )[ path ] = key }
 
-export const Publish = ( path: string, message: any ) => ( global as any ).publish( path, message )
+export const Publish = ( path: string, message: any ) => global.publish( path, message )
 
-export const Broadcast = ( { clients, path, message }: any ) => { for ( let i in clients ) ( global as any ).publish( `${path}-${clients[ i ]}`, message ) }
+export const Broadcast = ( { clients, path, message }: any ) => { for ( let i in clients ) global.publish( `${path}-${clients[ i ]}`, message ) }
 
-export const Client = ( value: string ) => ( global as any ).client( value )
+export const Client = ( value: string ) => global.client( value )
 
 // UTILITY
-export const Navigate = ( path: string ) => ( global as any ).router( path )
+export const Navigate = ( path: string ) => global.router( path )
 
 export const Logger = ( type?: string ) => {
 	const green = ( value: any ) => `\x1b[32m${value}\x1b[0m`
@@ -59,6 +59,10 @@ export const Logger = ( type?: string ) => {
 	}
 }
 
-export const Service = ( ) => ( target: any ) => { ( ( global as any ).__services__ ??= {} )[ target.name ] = service( target ) }
+export const Service = ( ) => ( target: any ) => { ( global.__services__ ??= {} )[ target.name ] = service( target ) }
+
+export const Storage = ( ) => ( target: any ) => { ( global.__storages__ ??= {} )[ target.name ] = storage( target ) }
 
 export const Inject = ( ) => ( target: any, key: string ) => { ( target.__injection__ ??= {} )[ Reflect.getMetadata( 'design:type', target, key ).name ] = key }
+
+export const Observable = ( ) => ( target: any, key: string ) => { ( target.__observables__ ??= [] ).push( key ) }

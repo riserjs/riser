@@ -1,4 +1,3 @@
-
 export const component = ( target: any, methods ) => class Component extends target {
 	constructor( attributes, uid ) {
 		super()
@@ -45,6 +44,41 @@ export const gateway = ( path: string, target: any ) => new class extends target
 export const service = ( target: any ) => new class extends target {
 	constructor( ) {
 		super()
+	}
+}
+
+export const storage = ( target: any ) => new class extends target {
+	constructor( ) {
+		super()
+
+		// DEFINE STORAGES
+		{
+			for ( let name of Object.getOwnPropertyNames( this ) ) {
+				if ( [ 'clear', 'onchange' ].includes( name ) ) continue
+				let handler, value
+				//console.log( `${target.name.toLowerCase()}-${name}` )
+
+				const onupdate = ( ) => {
+					localStorage.setItem( `${target.name}-${name}`, JSON.stringify( this[ name ] ) )
+				}
+
+				if ( localStorage.getItem( `${target.name}-${name}` ) ) this[ name ] = JSON.parse( localStorage.getItem( `${target.name}-${name}` ) )
+
+				if ( this[ name ] instanceof Array ) {
+					handler = { get: ( target: any, property: string ) => {
+						if ( [ 'push', 'unshift', 'pop', 'shift', 'splice' ].includes( property ) ) return ( value: any ) => { target[ property ]( value ); onupdate( ) }
+						return target[ property ]
+					} }
+				} else if ( this[ name ] instanceof Object ) {
+					handler = { set: ( target: any, property: any, value: any ) => { target[ property ] = value; onupdate( ); return true } }
+				}
+
+				value = handler ? new Proxy( this[ name ], handler ) : this[ name ]
+
+				Object.defineProperty( this, name, { get: () => value, set: v => { value = handler ? new Proxy( v, handler ) : v; onupdate( ) } } )
+			}
+		}
+
 	}
 }
 

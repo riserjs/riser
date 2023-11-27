@@ -78,10 +78,27 @@ export class ExampleComponent {
 }
 ```
 
+#### Storage
+- Storage decorator with auto instance
+
+```typescript
+// example.storage.ts
+import { Storage } from 'riser'
+
+@Storage( )
+export class ExampleStorage {
+
+	name: string
+	email: string
+
+}
+```
+
 #### Utility
 - Navigate method for routing
 - Subscribe decorator for websocket events callback
 - Publish method websocket event send
+- Observable decorator to share data between components
 
 ```typescript
 // example.view.tsx
@@ -89,6 +106,16 @@ import { View, Navigate, Subscribe, Publish, Logger } from 'riser'
 
 @View( '/example' )
 export class ExampleView {
+
+  test: string
+
+	@Observable( )
+	myobserver: any
+
+  onMount( ) {
+    this.myobserver.subscribe( v => this.test = v )
+		this.myobserver.publish( 'test' )
+  }
 
   ...
   @Logger( 'in' )

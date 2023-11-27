@@ -6,8 +6,8 @@
   "files.exclude": {
     "**/.vscode": true,
     "**/node_modules": true,
-    //"**/dist": true,
-    "**/package-lock.json": false,
+    "**/dist": false,
+    "**/package-lock.json": true,
     "**/yarn.lock": true,
   },
 }

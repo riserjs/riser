@@ -15,6 +15,7 @@ declare module 'riser' {
   export function Response( path: string, message: any )
   export function Broadcast( { clients, path, message }: any )
   export function Service( )
+  export function Storage( )
   export function Inject( )
   export function Logger( value?: any )
   export function Guard( )
@@ -29,10 +30,22 @@ declare module 'riser' {
   export function Parameter( )
   export function Property( )
   export function Client( value: string )
+  export function Observable( )
   export type Request = { client: string, path: string, message: any }
   export type Response = { path: string, message: any }
   export type Children = HTMLElement[]
+  interface Observable < TYPE > {
+    value: TYPE
+    subscriptions: any
+    subscribe: ( v ) => void 
+    publish: ( v ) => void 
+  }
 }
+
+declare module '*.png'
+declare module '*.svg'
+declare module '*.jpeg'
+declare module '*.jpg'
 
 //interface Object extends Object { map?: any }
 
@@ -41,7 +54,6 @@ declare module 'riser' {
 }*/
 
 /*Number.prototype.format = (): string => {}*/
-
 
 //Object.defineProperty( Array.prototype, 'isEmpty', { value: () => Array.prototype.length == 0 ? false : true } )
 //Object.defineProperty( Object.prototype, 'isEmpty', { value: () => Object.keys( Object.prototype ).length == 0 ? false : true } )
@@ -168,14 +180,3 @@ namespace JSX {
     webview: any;
   }
 }
-
-declare module '*.png'
-declare module '*.svg'
-declare module '*.jpeg'
-declare module '*.jpg'
-
-interface String { q }
-interface Number { q }
-interface Boolean { q }
-interface Array { q, isEmpty }
-interface Object { q, isEmpty }

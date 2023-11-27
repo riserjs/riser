@@ -195,7 +195,12 @@ const fConfig: any = {
 							[ '@babel/preset-react', { 'pragma': 'global.jsx.createElement', 'pragmaFrag': 'global.jsx.Fragment' } ]
 						],
 						plugins: [
+							[ 'babel-plugin-transform-typescript-metadata' ],
 							[ '@babel/plugin-proposal-decorators', { legacy: true } ],
+							[ '@babel/plugin-transform-class-properties', { loose: true } ],
+							[ '@babel/plugin-transform-private-methods', { loose: true } ],
+							[ '@babel/plugin-transform-private-property-in-object', { loose: true } ],
+							[ '@babel/plugin-transform-optional-chaining' ],
 							[ enableReactivity ]
 						]
 					}
@@ -274,7 +279,7 @@ const bConfig: any = {
 	}
 }	
 
-const flogs = /\.(view|component).(js|jsx|ts|tsx)?$/
+const flogs = /\.(view|component|storage).(js|jsx|ts|tsx)?$/
 const blogs = /\.(gateway|guard|service).(js|ts)?$/
 
 if ( mode == 'development' ) {

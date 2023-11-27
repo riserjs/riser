@@ -1,7 +1,7 @@
 let context
 
 const load = () => {
-	context = require.context( `${__dirname}/../../../../src`, true, /\.(view|component).(jsx|tsx)?$/  )
+	context = require.context( `${__dirname}/../../../../src`, true, /\.(view|component|storage).(jsx|tsx|js|ts)?$/  )
 	context.keys().map( ( file ) => context( file ) )
 }
 

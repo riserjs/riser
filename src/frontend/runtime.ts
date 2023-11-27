@@ -1,9 +1,9 @@
 import { connect } from 'mqtt/dist/mqtt.min'
-import { random, recursivelyRemove } from '../utils'
+import { random, recursivelyRemove, getUrlParams } from '../utils'
 
 declare var broker: any
 
-( global as any ).storages = {}
+global.storages = {}
 
 const getIndex = ( childs: any, index: any ) => {
 	let uid: string = '', last = Number( index )
@@ -83,24 +83,33 @@ const update = ( elements: any ) => {
 const constructor = ( { element, attributes, children } ) => {
 
 	const uid = random( );
-	( global as any ).storages[ uid ] = { instance: new element( attributes, uid ), render: undefined }
+	global.storages[ uid ] = { instance: new element( attributes, uid ), render: undefined }
+
+	// ENABLE DEPENDECY INJECTION
+	{
+		for ( let i in global.storages[ uid ].instance.__injection__ ) {
+			for ( let s in global.__storages__ ) {
+				if ( i == s ) global.storages[ uid ].instance[ global.storages[ uid ].instance.__injection__[ i ] ] = global.__storages__[ i ]
+			}
+		}
+	}
 
 	// STORAGE REACTIVITY
 	{
-		( global as any ).storages[ uid ].instance.append = ( prop: string, id: string, type: string, param: any ) => { ( ( ( ( global as any ).storages[ uid ][ prop ] ??= {} )[ id ] ??= {} )[ type ] ??= {} )[ param.name ? param.name : param.index ] = param.value }
+		global.storages[ uid ].instance.append = ( prop: string, id: string, type: string, param: any ) => { ( ( ( global.storages[ uid ][ prop ] ??= {} )[ id ] ??= {} )[ type ] ??= {} )[ param.name ? param.name : param.index ] = param.value }
 	}
 
 	// DEFINE STATES
 	{
-		for ( let key in ( global as any ).storages[ uid ].instance.__states__ ) {
-			let name = ( global as any ).storages[ uid ].instance.__states__[ key ], handler
+		for ( let key in global.storages[ uid ].instance.__states__ ) {
+			let name = global.storages[ uid ].instance.__states__[ key ], handler
 
 			const onupdate = ( ) => {
-				update( ( global as any ).storages[ uid ][ name ] )
-				if ( ( global as any ).storages[ uid ][ name ]?.properties ) for ( let i in ( global as any ).storages[ uid ][ name ].properties ) ( global as any ).storages[ uid ][ name ].properties[ i ]( ( global as any ).storages[ uid ].instance[ name ] )
+				update( global.storages[ uid ][ name ] )
+				if ( global.storages[ uid ][ name ]?.properties ) for ( let i in global.storages[ uid ][ name ].properties ) global.storages[ uid ][ name ].properties[ i ]( global.storages[ uid ].instance[ name ] )
 			}
 
-			if ( ( global as any ).storages[ uid ].instance[ name ] instanceof Array ) {
+			if ( global.storages[ uid ].instance[ name ] instanceof Array ) {
 				let timeout
 				handler = { get: ( target: any, property: string ) => {
 					//if ( [ 'push', 'unshift', 'pop', 'shift', 'splice' ].includes( property ) ) clearTimeout( timeout ); timeout = setTimeout( ( ) => { onupdate( ); clearTimeout( timeout ) }, 10 )
@@ -108,22 +117,22 @@ const constructor = ( { element, attributes, children } ) => {
 					return target[ property ]
 				} }
 
-			} else if ( ( global as any ).storages[ uid ].instance[ name ] instanceof Object ) {
+			} else if ( global.storages[ uid ].instance[ name ] instanceof Object ) {
 				handler = { set: ( target: any, property: any, value: any ) => { target[ property ] = value; onupdate( ); return true } }
 			}
 
-			let value = handler ? new Proxy( ( global as any ).storages[ uid ].instance[ name ], handler ) : ( global as any ).storages[ uid ].instance[ name ]
+			let value = handler ? new Proxy( global.storages[ uid ].instance[ name ], handler ) : global.storages[ uid ].instance[ name ]
 
-			Object.defineProperty( ( global as any ).storages[ uid ].instance, name, { get: () => value, set: v => { value = handler ? new Proxy( v, handler ) : v; onupdate( ) } } )
+			Object.defineProperty( global.storages[ uid ].instance, name, { get: () => value, set: v => { value = handler ? new Proxy( v, handler ) : v; onupdate( ) } } )
 		}
 	}
 
 	// DEFINE PROPERTIES
 	{
-		for ( let property in ( global as any ).storages[ uid ].instance.__properties__ ) {
-			let name = ( global as any ).storages[ uid ].instance.__properties__[ property ], handler, parent, state
+		for ( let property in global.storages[ uid ].instance.__properties__ ) {
+			let name = global.storages[ uid ].instance.__properties__[ property ], handler, parent, state
 			
-			if ( typeof attributes[ name ] == 'function' ) { ( global as any ).storages[ uid ].instance[ name ] = attributes[ name ]; continue }
+			if ( typeof attributes[ name ] == 'function' ) { global.storages[ uid ].instance[ name ] = attributes[ name ]; continue }
 	
 			if ( !attributes.hasOwnProperty( name ) ) continue
 
@@ -133,8 +142,8 @@ const constructor = ( { element, attributes, children } ) => {
 			}
 
 			const onupdate = ( ) => {
-				if ( ( global as any ).storages[ uid ] && ( global as any ).storages[ uid ][ name ] ) update( ( global as any ).storages[ uid ][ name ] )
-				if ( ( global as any ).parent && state && ( global as any ).storages[ parent ].instance[ state ] != ( global as any ).storages[ uid ].instance[ name ] ) ( global as any ).storages[ parent ].instance[ state ] = ( global as any ).storages[ uid ].instance[ name ]
+				if ( global.storages[ uid ] && global.storages[ uid ][ name ] ) update( global.storages[ uid ][ name ] )
+				if ( global.parent && state && global.storages[ parent ].instance[ state ] != global.storages[ uid ].instance[ name ] ) global.storages[ parent ].instance[ state ] = global.storages[ uid ].instance[ name ]
 			}
 
 			if ( attributes[ name ] instanceof Array ) {
@@ -145,29 +154,50 @@ const constructor = ( { element, attributes, children } ) => {
 
 			let value = attributes[ name ]
 	
-			Object.defineProperty( ( global as any ).storages[ uid ].instance, name, { get: () => value, set: v => { value = handler ? new Proxy( v, handler ) : v; onupdate( ) } } )
+			Object.defineProperty( global.storages[ uid ].instance, name, { get: () => value, set: v => { value = handler ? new Proxy( v, handler ) : v; onupdate( ) } } )
 
-			if ( parent && state ) ( ( global as any ).storages[ parent ][ state ].properties ??= [] ).push( ( v => { if ( ( global as any ).storages[ uid ].instance[ name ] != v ) ( global as any ).storages[ uid ].instance[ name ] = v } ) )
+			if ( parent && state ) ( global.storages[ parent ][ state ].properties ??= [] ).push( ( v => { if ( global.storages[ uid ].instance[ name ] != v ) global.storages[ uid ].instance[ name ] = v } ) )
 		}
 	}
 
 	// DEFINE PARAMETERS
 	{
-		for ( let key in ( global as any ).storages[ uid ].instance.__parameters__ ) {
-			let name = ( global as any ).storages[ uid ].instance.__parameters__[ key ]
-			if ( attributes.hasOwnProperty( name ) ) ( global as any ).storages[ uid ].instance[ name ] = attributes[ name ]
+		for ( let key in global.storages[ uid ].instance.__parameters__ ) {
+			let name = global.storages[ uid ].instance.__parameters__[ key ]
+			if ( attributes.hasOwnProperty( name ) ) global.storages[ uid ].instance[ name ] = attributes[ name ]
+		}
+	}
+
+	// DEFINE OBSERVABLES
+	{
+		for ( let key in global.storages[ uid ].instance.__observables__ ) {
+			let name = global.storages[ uid ].instance.__observables__[ key ]
+
+			global.storages[ uid ].instance[ name ] = new class {
+				subscribe( callback ) {
+					( ( global.observables ??= {} )[ name ] ??= {} )[ uid ] = callback
+
+					console.log('sub',callback)
+					//localStorage.getItem( `${target}-${key}` );
+				}
+				publish( value ) {
+					if ( global.observables && global.observables[ name ] ) for ( let obs in global.observables[ name ] ) global.observables[ name ][ obs ]( value )
+
+					console.log('pub', value )
+					//localStorage.setItem( `observable-${key}`, JSON.stringify( value ) )
+				}
+			}
 		}
 	}
 
 	// DEFINE SUBSCRIPTIONS
-	// AQUI ABAJO ESTA PARA HACER SUbSCRIBE DIRECTO
 	{
-		for ( let key in ( global as any ).storages[ uid ].instance.__subscriptions__ ) ( global as any ).subscribe( key, ( global as any ).storages[ uid ].instance[ ( global as any ).storages[ uid ].instance.__subscriptions__[ key ] ], uid )
+		for ( let key in global.storages[ uid ].instance.__subscriptions__ ) global.subscribe( key, global.storages[ uid ].instance[ global.storages[ uid ].instance.__subscriptions__[ key ] ], uid )
 	}
 
 	// RENDERING
 	{
-		( global as any ).storages[ uid ].render = ( global as any ).storages[ uid ].instance.render( children )
+		global.storages[ uid ].render = global.storages[ uid ].instance.render( children )
 	}
 
 	// REDEFINE IDS
@@ -178,14 +208,14 @@ const constructor = ( { element, attributes, children } ) => {
 				if ( attr == 'parent' ) { element.removeAttribute( attr ); continue }
 				if ( attr.indexOf( '-' ) !== -1 ) { element.removeAttribute( attr ); continue }
 				if ( attr.length != 10 ) continue
-				for ( let prop in ( global as any ).storages[ uid ] ) {
-					for ( let id in ( global as any ).storages[ uid ][ prop ] ) {
+				for ( let prop in global.storages[ uid ] ) {
+					for ( let id in global.storages[ uid ][ prop ] ) {
 						if ( id != attr ) continue
 						const newId = random( )
 						element.removeAttribute( attr )
 						element.setAttribute( newId, '' );
-						( global as any ).storages[ uid ][ prop ][ newId ] = ( global as any ).storages[ uid ][ prop ][ id ]
-						delete ( global as any ).storages[ uid ][ prop ][ id ]
+						global.storages[ uid ][ prop ][ newId ] = global.storages[ uid ][ prop ][ id ]
+						delete global.storages[ uid ][ prop ][ id ]
 					}
 				}
 			}
@@ -193,33 +223,39 @@ const constructor = ( { element, attributes, children } ) => {
 				if ( child instanceof HTMLElement ) recursion( child )
 			}
 		}
-		recursion( ( global as any ).storages[ uid ].render )
+		recursion( global.storages[ uid ].render )
 	}
 
 	// RUN ONMOUNT METHOD
 	{
-		if ( ( global as any ).storages[ uid ].instance.onMount ) ( global as any ).storages[ uid ].instance.onMount( )
+		if ( global.storages[ uid ].instance.onMount ) global.storages[ uid ].instance.onMount( )
 	}
 
 	// DEBUGING PURPUSES
 	{
-		( global as any ).storages[ uid ].render.setAttribute( ( global as any ).storages[ uid ].instance.__name__, '' )
+		global.storages[ uid ].render.setAttribute( global.storages[ uid ].instance.__name__, '' )
 	}
 
 	// RUN ONUNMOUNT AND CLEAN UP
 	{
 		setTimeout( ( ) => {
 			new MutationObserver( function ( ) {
-				if ( !document.body.contains( ( global as any ).storages[ uid ].render ) ) {
-					if ( ( global as any ).storages[ uid ].instance?.onUnmount ) ( global as any ).storages[ uid ].instance.onUnmount( )
-					delete ( global as any ).storages[ uid ];
+				if ( !document.body.contains( global.storages[ uid ].render ) ) {
+
+					for ( let key in global.storages[ uid ].instance.__observables__ ) {
+						let name = global.storages[ uid ].instance.__observables__[ key ]
+						if ( global.observables && global.observables[ name ] && global.observables[ name ][ uid ] ) delete global.observables[ name ][ uid ]
+					}
+
+					if ( global.storages[ uid ].instance?.onUnmount ) global.storages[ uid ].instance.onUnmount( )
+					delete global.storages[ uid ];
 					this.disconnect( )
 				}
-			} ).observe( ( global as any ).storages[ uid ].render.parentElement, { childList: true } )
+			} ).observe( global.storages[ uid ].render.parentElement, { childList: true } )
 		} )
 	}
 
-	return ( global as any ).storages[ uid ].render
+	return global.storages[ uid ].render
 }
 
 const addAttributes = ( elem: any, attrs: any ) => {
@@ -277,9 +313,7 @@ const Fragment = ( { children }: any ) => {
 	return element
 }
 
-( global as any ).jsx = { Fragment, createElement }
-
-const getUrlParams = () => Object.fromEntries( new URLSearchParams( location.search ) )
+global.jsx = { Fragment, createElement }
 
 let network = connect( `ws://${location.hostname}:${broker.port}`, { username: broker.username, password: broker.password } );
 
@@ -287,7 +321,7 @@ let client = localStorage.getItem( 'client' ) ? localStorage.getItem( 'client' )
 
 const subscribers = {};
 
-( global as any ).client = ( value: string ) => {
+global.client = ( value: string ) => {
 	if ( localStorage.getItem( 'client' ) == value ) return
 	localStorage.setItem( 'client', value )
 	client = value
@@ -301,51 +335,51 @@ const subscribers = {};
 }
 
 network.on( 'message', ( path: string, message: Buffer ) => {
-	if ( subscribers.hasOwnProperty( path ) && ( global as any ).storages[ subscribers[ path ].uid ] ) subscribers[ path ].callback( JSON.parse( message.toString( ) ) )
+	if ( subscribers.hasOwnProperty( path ) && global.storages[ subscribers[ path ].uid ] ) subscribers[ path ].callback( JSON.parse( message.toString( ) ) )
 } );
 
-( global as any ).subscribe = ( path: string, callback: any, uid: string ) => {
+global.subscribe = ( path: string, callback: any, uid: string ) => {
 	subscribers[ `${path}-${client}` ] = { path, callback, uid }
 	network.subscribe( `${path}-${client}` )
 }
 
-( global as any ).publish = ( path: string, message: any ) => {
+global.publish = ( path: string, message: any ) => {
 	network.publish( path, JSON.stringify( { client, message } ) )
 }
 
-( global as any ).disconnect = ( ) => network.end()
+global.disconnect = ( ) => network.end()
 
 window.onpopstate = ( ) => {
-	const Element = ( global as any ).views[ location.pathname ]
-	document.body.replaceChildren( ( global as any ).jsx.createElement( Element, getUrlParams( ), null ) )
+	const Element = global.views[ location.pathname ]
+	document.body.replaceChildren( global.jsx.createElement( Element, getUrlParams( ), null ) )
 }
 
-( global as any ).router = ( path: string ) => {
+global.router = ( path: string ) => {
 	let Element: any, l: string
-	for ( let i in ( global as any ).views ) if ( path.startsWith( i ) && i != '/' ) {
-		Element = ( global as any ).views[ i ]
+	for ( let i in global.views ) if ( path.startsWith( i ) && i != '/' ) {
+		Element = global.views[ i ]
 	}
 	if ( !Element ) {
-		Element = ( global as any ).views[ '/' ]
+		Element = global.views[ '/' ]
 		l = `${location.origin}/`
 	} else {
 		l = `${location.origin}${path}`
 	}
 	history.pushState( {}, '', l )
 	recursivelyRemove( document.body.firstChild )
-	document.body.append( ( global as any ).jsx.createElement( Element, getUrlParams( ), null ) )
+	document.body.append( global.jsx.createElement( Element, getUrlParams( ), null ) )
 }
 
-( global as any ).main = ( ) => {
-	let Element = ( global as any ).views[ location.pathname ]
+global.main = ( ) => {
+	let Element = global.views[ location.pathname ]
 	if ( !Element ) {
-		Element = ( global as any ).views[ '/' ]
+		Element = global.views[ '/' ]
 		history.pushState( {}, '', location.origin + '/' )
 	}
-	document.body.replaceChildren( ( global as any ).jsx.createElement( Element, getUrlParams( ), null ) )
+	document.body.replaceChildren( global.jsx.createElement( Element, getUrlParams( ), null ) )
 }
 
-( global as any ).main( )
+global.main( )
 
 const log = console.log
 console.log = function( ...args ) {
