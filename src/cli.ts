@@ -214,8 +214,8 @@ const fConfig: any = {
 		]
 	},
   plugins: [
-		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false } ),
-		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.mqtt ) } )
+		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false, templateParameters: { title: config.appname } } ),
+		new webpack.DefinePlugin( { config: JSON.stringify( config ) } )
   ],
   output: {
     filename: '[name].js',
@@ -271,7 +271,7 @@ const bConfig: any = {
 		} ]
 	},
 	plugins: [
-		new webpack.DefinePlugin( { 'config': JSON.stringify( config ) } )
+		new webpack.DefinePlugin( { config: JSON.stringify( config ) } )
 	],
 	output: {
 		path: path.join( __dirname, '../../../dist' ),

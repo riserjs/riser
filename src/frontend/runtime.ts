@@ -1,7 +1,7 @@
 import { connect } from 'mqtt/dist/mqtt.min'
 import { random, recursivelyRemove, getUrlParams } from '../utils'
 
-declare var broker: any
+declare var config: any
 
 global.storages = {}
 
@@ -315,7 +315,7 @@ const Fragment = ( { children }: any ) => {
 
 global.jsx = { Fragment, createElement }
 
-let network = connect( `ws://${location.hostname}:${broker.port}`, { username: broker.username, password: broker.password } );
+let network = connect( `ws://${location.hostname}:${config.mqtt.port}`, { username: config.mqtt.username, password: config.mqtt.password } );
 
 let client = localStorage.getItem( 'client' ) ? localStorage.getItem( 'client' ) : Math.random().toString( 36 ).slice( -9 )
 
