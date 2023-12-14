@@ -1,8 +1,11 @@
-import { connect } from 'mqtt'
+import { connect as Mqtt } from 'mqtt'
+import { connect as Mongodb } from 'mongoose';
 
-declare var broker: any
+declare var config: any
 
-const network = connect( `ws://${broker.host}:${broker.port}`, { username: broker.username, password: broker.password } );
+const network = Mqtt( `ws://${config.mqtt.host}:${config.mqtt.port}`, { username: config.mqtt.username, password: config.mqtt.password } );
+
+const database = Mongodb( `mongodb://${config.mongodb.username}:${config.mongodb.password}@${config.mongodb.host}:${config.mongodb.port}/${config.appname}?authSource=admin` );
 
 ( global as any ).publish = ( path: string, message: any ) => network.publish( path, JSON.stringify( message ) )
 

@@ -215,7 +215,7 @@ const fConfig: any = {
 	},
   plugins: [
 		new HtmlWebpackPlugin( { template: './node_modules/riser/index.html', inject: false } ),
-		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.broker ) } )
+		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.mqtt ) } )
   ],
   output: {
     filename: '[name].js',
@@ -271,7 +271,7 @@ const bConfig: any = {
 		} ]
 	},
 	plugins: [
-		new webpack.DefinePlugin( { 'broker': JSON.stringify( config.broker ) } )
+		new webpack.DefinePlugin( { 'config': JSON.stringify( config ) } )
 	],
 	output: {
 		path: path.join( __dirname, '../../../dist' ),

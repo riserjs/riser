@@ -88,8 +88,26 @@ import { Storage } from 'riser'
 @Storage( )
 export class ExampleStorage {
 
-	name: string
-	email: string
+  name: string
+  email: string
+
+}
+
+// example.component.ts
+import { Component, Inject } from 'riser'
+import { ExampleStorage } from './example.storage.ts'
+
+@Component( )
+export class ExampleComponent {
+
+  ...
+  @Inject( )
+  storage: ExampleStorage
+
+  onMount( ) {
+    this.storage.name = 'Example'
+  }
+  ...
 
 }
 ```
@@ -99,22 +117,23 @@ export class ExampleStorage {
 - Subscribe decorator for websocket events callback
 - Publish method websocket event send
 - Observable decorator to share data between components
+- Inject decorator for storage dependecy injection
 
 ```typescript
 // example.view.tsx
-import { View, Navigate, Subscribe, Publish, Logger } from 'riser'
+import { View, Navigate, Subscribe, Publish, Logger, Inject } from 'riser'
 
 @View( '/example' )
 export class ExampleView {
 
   test: string
 
-	@Observable( )
-	myobserver: any
+  @Observable( )
+  myobserver: any
 
   onMount( ) {
     this.myobserver.subscribe( v => this.test = v )
-		this.myobserver.publish( 'test' )
+    this.myobserver.publish( 'test' )
   }
 
   ...
