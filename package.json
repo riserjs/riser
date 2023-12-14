@@ -1,6 +1,6 @@
 {
   "name": "riser",
-  "version": "0.3.57",
+  "version": "0.3.58",
   "description": "A decentralized framework for develop frontend and/or backend realtime applications",
   "main": "index.js",
   "bin": "./dist/cli.js",
@@ -34,6 +34,7 @@
     "css-loader": "^6.8.1",
     "html-webpack-plugin": "^5.5.3",
     "memfs": "^4.6.0",
+    "mongoose": "^8.0.3",
     "mqtt": "^5.1.3",
     "postcss": "^8.4.30",
     "postcss-loader": "^7.3.3",
