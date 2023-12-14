@@ -3,6 +3,16 @@ import { random, recursivelyRemove, getUrlParams } from '../utils'
 
 declare var config: any
 
+const body = document.getElementsByTagName("body")[ 0 ].style
+body.height = '100vh'
+body.width = '100vw'
+body.margin = '0'
+body.padding = '0'
+body.display = 'flex'
+body.flexDirection = 'column'
+body.background = 'black'
+body.color = 'white'
+
 global.storages = {}
 
 const getIndex = ( childs: any, index: any ) => {
