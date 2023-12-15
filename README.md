@@ -18,7 +18,7 @@
 - View decorator path route and auto instance
 - Parameter decorator to extract route url parameter
 
-```typescript
+```tsx
 // example.view.tsx
 import { View, Parameter } from 'riser'
 
@@ -44,7 +44,7 @@ export class ExampleView {
 - Property decorator like react props
 - Children as render argument
 
-```typescript
+```tsx
 // example.component.tsx
 import { Component, Property, State, Children } from 'riser'
 
@@ -83,7 +83,7 @@ export class ExampleComponent {
 - Row
 - Column
 
-```typescript
+```tsx
 // example.component.tsx
 import { Box, Row, Column } from 'riser'
 
@@ -303,6 +303,5 @@ module.exports = ( mode ) => {
 ```
 
 #### Future implementations
-- Layout system
 - Style sytem
 - Mongodb odm layer
