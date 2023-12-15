@@ -78,6 +78,34 @@ export class ExampleComponent {
 }
 ```
 
+#### Component
+- Component decorator to enable component
+- onMount and onUnmount life cycles callbacks
+- State decorator like useState without set method
+- Property decorator like react props
+- Children as render argument
+
+```typescript
+// example.component.tsx
+import { Box, Row, Column } from 'riser'
+
+@Component( )
+export class ExampleComponent {
+
+  render( ) {
+    return (
+      <Box height='100%' width='100%'>
+        <Row height='100%'>
+          <Column width='30%'></Column>
+          <Column width='70%'></Column>
+        </Row>
+      </Box>
+    )
+  }
+
+}
+```
+
 #### Storage
 - Storage decorator with auto instance
 
@@ -280,4 +308,3 @@ module.exports = ( mode ) => {
 - Layout system
 - Style sytem
 - Mongodb odm layer
-- Observable pattern
