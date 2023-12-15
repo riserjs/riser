@@ -78,12 +78,10 @@ export class ExampleComponent {
 }
 ```
 
-#### Component
-- Component decorator to enable component
-- onMount and onUnmount life cycles callbacks
-- State decorator like useState without set method
-- Property decorator like react props
-- Children as render argument
+#### Layout
+- Box
+- Row
+- Column
 
 ```typescript
 // example.component.tsx
