@@ -1,7 +1,6 @@
 const path = require( 'path' )
 const webpack = require( 'webpack' )
 const nodeExternals = require( 'webpack-node-externals' )
-const CopyPlugin = require( 'copy-webpack-plugin' )
 
 const config = {
 	mode: 'production',
@@ -35,6 +34,30 @@ const config = {
 	}
 }
 
+const floader = {
+	...config,
+	entry: {
+		loader: './src/frontend/loader.ts',
+	},
+	target: 'node',
+	output: {
+		path: path.resolve( __dirname, 'dist/frontend' ),
+		filename: '[name].js',
+	}
+}
+
+const bloader = {
+	...config,
+	entry: {
+		loader: './src/backend/loader.ts',
+	},
+	target: 'node',
+	output: {
+		path: path.resolve( __dirname, 'dist/backend' ),
+		filename: '[name].js',
+	}
+}
+
 const frontend = {
 	...config,
 	entry: {
@@ -47,9 +70,6 @@ const frontend = {
 	},
 	externals: [
 		nodeExternals()
-	],
-	plugins: [
-		new CopyPlugin( { patterns: [ 'src/frontend/loader.js' ] } ),
 	]
 }
 
@@ -78,11 +98,6 @@ const backend = {
 	},
 	externals: [
 		nodeExternals()
-	],
-	plugins: [
-		new CopyPlugin(	{
-			patterns: [ 'src/backend/loader.js'],
-		}	)
 	]
 }
 
@@ -104,4 +119,4 @@ const cli = {
 	]
 }
 
-module.exports = [ frontend, backend, core, cli ]
+module.exports = [ frontend, backend, core, cli, floader, bloader ]

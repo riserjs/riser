@@ -215,7 +215,7 @@ const fConfig: any = {
 	},
   plugins: [
 		new HtmlWebpackPlugin( { inject: true, title: config.appname } ),
-		new webpack.DefinePlugin( { config: JSON.stringify( config ) } )
+		new webpack.DefinePlugin( { config: JSON.stringify( config ), type: 'frontend' } )
   ],
   output: {
     filename: '[name].js',
@@ -280,7 +280,7 @@ const bConfig: any = {
 }	
 
 const flogs = /\.(view|component|storage).(js|jsx|ts|tsx)?$/
-const blogs = /\.(gateway|guard|service).(js|ts)?$/
+const blogs = /\.(gateway|guard|service|model).(js|ts)?$/
 
 if ( mode == 'development' ) {
 
