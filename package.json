@@ -1,6 +1,6 @@
 {
   "name": "riser",
-  "version": "0.3.63",
+  "version": "0.3.64",
   "description": "A decentralized framework for develop frontend and/or backend realtime applications",
   "main": "index.js",
   "bin": "./dist/cli.js",
@@ -44,6 +44,7 @@
     "style-loader": "^3.3.3",
     "tailwindcss": "^3.3.3",
     "tslib": "^2.6.2",
+    "typeorm": "^0.3.19",
     "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4",
