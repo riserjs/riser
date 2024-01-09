@@ -52,8 +52,10 @@ declare module 'riser/database' {
   export function Field( options?: any )
   export interface Model < T > {
     async create( query: any )
-    async read( query: any )
+    async read( query: any, all?: boolean )
+    async readAll( query: any, values: any )
     async update( query: any, values: any )
+    async updateAll( query: any, values: any )
     async delete( query: any )
   }
 }

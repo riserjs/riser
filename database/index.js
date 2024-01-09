@@ -1,22 +1,13 @@
 const mongoose = require( 'mongoose' )
 require( 'reflect-metadata' )
 
-const Schema = ( name ) => ( target ) => { ( global.__schemas__ ??= {} )[ name ] = mongoose.models && mongoose.models[ name ] ? mongoose.models[ name ] : mongoose.model( name, new mongoose.Schema( target.prototype.__schema__ ) ) }
+const Schema = ( name ) => ( target ) => {
+	const schema = new mongoose.Schema( target.prototype.__schema__ )
+  schema.statics.read = async function( query, all = false ) {return await this[ !all ? 'findOne' : 'find' ]( query, { _id: 0, __v: 0 } ) }
+  schema.statics.update = async function( query, update ) { return await this.updateOne( query, update ) }
+  schema.statics.delete = async function( query ) { return await this.deleteOne( query ) }
+	;( global.__schemas__ ??= {} )[ name ] = mongoose.models && mongoose.models[ name ] ? mongoose.models[ name ] : mongoose.model( name, schema )
+}
 const Field = ( options ) => ( target, key ) => { ( target.__schema__ ??= {} )[ key ] = { ...options, type: Reflect.getMetadata( 'design:type', target, key ).name } }
 
-class Model extends mongoose.Model {
-	async create( query ) {
-		return await super.create( query )
-	}
-	async read( query ) {
-    return await super.findOne( query )
-	}
-	async update( query, values ) {
-    return await super.updateOne( query, values )
-	}
-	async delete( query ) {
-    return await super.deleteOne( query )
-	}
-}
-
-module.exports = { Schema, Field, Model }
+module.exports = { Schema, Field, Model: mongoose.Model }

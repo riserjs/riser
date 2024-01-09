@@ -28,8 +28,8 @@ network.on( 'message', async ( path: string, buffer: Buffer ) => {
 		}
 	}
 
-	if ( ( global as any ).subscribers.hasOwnProperty( path ) && forward ) {
-		const response = await ( global as any ).subscribers[ path ]( { client, message } )
+	if ( global.subscribers.hasOwnProperty( path ) && forward ) {
+		const response = await global.subscribers[ path ]( { client, message } )
 		if ( response ) network.publish( `${response.path}-${client}`, JSON.stringify( response.message ) )
 	}
 

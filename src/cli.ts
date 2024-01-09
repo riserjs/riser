@@ -276,11 +276,16 @@ const bConfig: any = {
 	output: {
 		path: path.join( __dirname, '../../../dist' ),
 		filename: '[name].js'
-	}
+	},
+	performance: {
+		hints: false,
+		maxEntrypointSize: 512000,
+		maxAssetSize: 512000
+	},
 }	
 
 const flogs = /\.(view|component|storage).(js|jsx|ts|tsx)?$/
-const blogs = /\.(gateway|guard|service|model|schema).(js|ts)?$/
+const blogs = /\.(gateway|guard|service|schema).(js|ts)?$/
 
 if ( mode == 'development' ) {
 
