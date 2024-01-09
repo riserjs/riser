@@ -1,6 +1,6 @@
 {
   "name": "riser",
-  "version": "0.3.65",
+  "version": "0.3.66",
   "description": "A decentralized framework for develop frontend and/or backend realtime applications",
   "main": "index.js",
   "bin": "./dist/cli.js",
@@ -17,7 +17,6 @@
   "dependencies": {
     "@babel/cli": "^7.22.15",
     "@babel/core": "^7.22.15",
-    "@babel/plugin-proposal-class-properties": "^7.18.6",
     "@babel/plugin-proposal-decorators": "^7.22.15",
     "@babel/plugin-syntax-decorators": "^7.22.10",
     "@babel/plugin-transform-class-properties": "^7.22.5",
