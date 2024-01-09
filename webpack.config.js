@@ -1,12 +1,18 @@
 const path = require( 'path' )
 const webpack = require( 'webpack' )
 const nodeExternals = require( 'webpack-node-externals' )
+const TerserPlugin = require( 'terser-webpack-plugin' )
 
 const config = {
 	mode: 'production',
 	resolve: {
 		extensions: [ '.js', '.ts', '.tsx', '.jsx' ],
 	},
+	optimization: {
+    minimizer: [
+			new TerserPlugin( { terserOptions: { keep_classnames: true } } )
+		],
+  },
 	module: {
 		rules: [
 			{ 
@@ -77,6 +83,7 @@ const core = {
 	...config,
 	entry: {
 		core: './src/core.ts',
+		//database: './src/database.ts',
 	},
 	output: {
 		path: path.resolve( __dirname, 'dist' ),
@@ -119,4 +126,4 @@ const cli = {
 	]
 }
 
-module.exports = [ frontend, backend, core, cli, floader, bloader ]
+module.exports = [ frontend, backend, core, cli, floader, bloader  ]

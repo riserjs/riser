@@ -20,24 +20,34 @@ export const gateway = ( path: string, target: any ) => new class extends target
 	constructor( ) {
 		super()
 
-		// ENABLE REQUESTS
-		for ( let i in this.__requests__ ) ( ( global as any ).subscribers ??= {} )[ `${path}${i}` ] = this[ this.__requests__[ i ] ]
+		// ENABLE SUBSCRIBERS
+		{
+			for ( let i in this.__requests__ ) ( global.subscribers ??= {} )[ `${path}${i}` ] = this[ this.__requests__[ i ] ]
+		}
 
 		// ENABLE EXPOSES
-		for ( let r in this.__requests__ ) {
-			for ( let e in this.__exposes__ ) {
-				if ( this.__requests__[ r ] == this.__exposes__[ e ] ) ( ( global as any ).exposes ??= {} )[ `${path}${r}` ] = e
+		{
+			for ( let r in this.__requests__ ) {
+				for ( let e in this.__exposes__ ) {
+					if ( this.__requests__[ r ] == this.__exposes__[ e ] ) ( global.exposes ??= {} )[ `${path}${r}` ] = e
+				}
 			}
 		}
 
-		// ENABLE DEPENDECY INJECTION
-		for ( let s in ( global as any ).__services__ ) {
-			for ( let i in this.__injection__ ) if ( i == s ) {
-				this[ this.__injection__[ i ] ] = ( global as any ).__services__[ i ]
+		// INJECT DEPENDECY
+		{
+			for ( let i in this.__injection__ ) {
+				for ( let s in global.__services__ ) if ( i == s ) this[ this.__injection__[ i ] ] = global.__services__[ i ]
 			}
 		}
 
-		if ( this.onBoot ) { this.onBoot( ) }
+		for ( let i in this.__schemas__ ) {
+			for ( let s in global.__schemas__ ) if ( i == s ) {	
+				this[ i ] = global.__schemas__[ i ]
+			}
+		}
+
+		if ( this.onBoot ) this.onBoot( )
 	}
 }
 

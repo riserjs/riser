@@ -16,7 +16,7 @@ declare module 'riser' {
   export function Broadcast( { clients, path, message }: any )
   export function Service( )
   export function Storage( )
-  export function Inject( )
+  export function Inject( options: any )
   export function Logger( value?: any )
   export function Guard( )
   export function Intercept( )
@@ -39,6 +39,22 @@ declare module 'riser' {
     subscriptions: any
     subscribe: ( v ) => void 
     publish: ( v ) => void 
+  }
+}
+
+declare module 'riser/interface' {
+  export function Button( data: any )
+  export function Input( data: any )
+}
+
+declare module 'riser/database' {
+  export function Schema( name: string )
+  export function Field( options?: any )
+  export interface Model < T > {
+    async create( query: any )
+    async read( query: any )
+    async update( query: any, values: any )
+    async delete( query: any )
   }
 }
 

@@ -186,14 +186,10 @@ const constructor = ( { element, attributes, children } ) => {
 			global.storages[ uid ].instance[ name ] = new class {
 				subscribe( callback ) {
 					( ( global.observables ??= {} )[ name ] ??= {} )[ uid ] = callback
-
-					console.log('sub',callback)
 					//localStorage.getItem( `${target}-${key}` );
 				}
 				publish( value ) {
 					if ( global.observables && global.observables[ name ] ) for ( let obs in global.observables[ name ] ) global.observables[ name ][ obs ]( value )
-
-					console.log('pub', value )
 					//localStorage.setItem( `observable-${key}`, JSON.stringify( value ) )
 				}
 			}

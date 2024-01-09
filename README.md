@@ -291,10 +291,15 @@ module.exports = ( mode ) => {
     development: {
       port: 3000
     },
-    broker: {
-      name: 'mqtt',
+    mqtt: {
       host: 'localhost',
       port: 9001,
+      username: 'root',
+      password: 'root'
+    },
+    mongodb: {
+      host: 'localhost',
+      port: 27017,
       username: 'root',
       password: 'root'
     }
@@ -303,5 +308,5 @@ module.exports = ( mode ) => {
 ```
 
 #### Future implementations
-- Style sytem
+- Style system
 - Mongodb odm layer

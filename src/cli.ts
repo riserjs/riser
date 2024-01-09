@@ -245,12 +245,12 @@ const bConfig: any = {
 		extensions: [ '.js', '.ts' ],
 	},
 	optimization: {
-    minimizer: [ new TerserPlugin( { extractComments: false } ) ],
+    minimizer: [ new TerserPlugin( { extractComments: false, terserOptions: { keep_classnames: true } } ) ],
   },
 	module: {
 		rules: [ { 
 			test: /\.(js|ts)$/,
-			exclude: /node_modules/,
+			exclude: /node_modules\/(?!(riser)\/).*/,
 			use: {
 				loader: 'babel-loader',
 				options: {
@@ -280,7 +280,7 @@ const bConfig: any = {
 }	
 
 const flogs = /\.(view|component|storage).(js|jsx|ts|tsx)?$/
-const blogs = /\.(gateway|guard|service|model).(js|ts)?$/
+const blogs = /\.(gateway|guard|service|model|schema).(js|ts)?$/
 
 if ( mode == 'development' ) {
 
