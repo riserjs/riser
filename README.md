@@ -7,7 +7,6 @@
 - Hot module reloading for frontend and backend
 - No public directory is required
 - No disk cache in development mode
-- Built in tailwind
 - Frontend and backend compiled isolated
 - Reactivity enabled for states and properties
 - Method auto binding
@@ -256,7 +255,7 @@ export class ExampleGateway {
 
   @Expose( )
   @Request( '/create' )
-  onCreate( { client, message }: Request ): void {
+    onCreate( { client, message }: Request ): void {
   }
 
 }
@@ -274,8 +273,8 @@ import { Schema, Field } from 'riser'
 @Schema( 'Example' )
 export class ExampleSchema {
 
-	@Field( )
-	count: number
+  @Field( { min: 0, max: 10 } )
+  count: number
 
 }
 
@@ -286,13 +285,13 @@ import { ExampleSchema } from 'example.schema'
 @Gateway( '/example' )
 export class ExampleGateway {
 
-	@Inject( { type: 'model', name: 'Example' } )
-	Example: Model < ExampleSchema >
+  @Inject( { type: 'model', name: 'Example' } )
+  Example: Model < ExampleSchema >
 
   async onBoot( ): Promise < void > {
 
     await this.Example.create( { count: 1 } )
-		Logger( await this.Example.read( { count: 1 } ) )
+    Logger( await this.Example.read( { count: 1 } ) )
     await this.Example.update( { count: 1 }, { count: 2 } )
     await this.Example.delete( { count: 2 } )
 
