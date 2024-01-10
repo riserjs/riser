@@ -127,7 +127,7 @@ import { ExampleStorage } from './example.storage.ts'
 export class ExampleComponent {
 
   ...
-  @Inject( )
+  @Inject( { type: 'storage', name: 'ExampleStorage' } )
   storage: ExampleStorage
 
   onMount( ) {
@@ -222,7 +222,7 @@ import { ExampleService } from './example.service.ts'
 @Gateway( '/example' )
 export class ExampleGateway {
 
-  @Inject( )
+  @Inject( { type: 'service', name: 'ExampleService' } )
   service: ExampleService
 
 }
@@ -257,6 +257,45 @@ export class ExampleGateway {
   @Expose( )
   @Request( '/create' )
   onCreate( { client, message }: Request ): void {
+  }
+
+}
+```
+
+#### Database
+- Schema
+- Field
+- Model
+
+```typescript
+// example.schema.ts
+import { Schema, Field } from 'riser'
+
+@Schema( 'Example' )
+export class ExampleSchema {
+
+	@Field( )
+	count: number
+
+}
+
+import { Gateway, Logger } from 'riser'
+import { Model } from 'riser/database'
+import { ExampleSchema } from 'example.schema'
+
+@Gateway( '/example' )
+export class ExampleGateway {
+
+	@Inject( { type: 'model', name: 'Example' } )
+	Example: Model < ExampleSchema >
+
+  async onBoot( ): Promise < void > {
+
+    await this.Example.create( { count: 1 } )
+		Logger( await this.Example.read( { count: 1 } ) )
+    await this.Example.update( { count: 1 }, { count: 2 } )
+    await this.Example.delete( { count: 2 } )
+
   }
 
 }
@@ -309,4 +348,3 @@ module.exports = ( mode ) => {
 
 #### Future implementations
 - Style system
-- Mongodb odm layer
