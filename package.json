@@ -1,16 +1,18 @@
 {
   "name": "riser",
-  "version": "0.3.71",
-  "description": "A decentralized framework for develop frontend and/or backend realtime applications",
+  "version": "0.3.72",
+  "description": "A decentralized fullstack framework for realtime applications",
   "main": "index.js",
   "bin": "./dist/cli.js",
   "keywords": [
     "framework",
     "realtime",
-    "jsx"
+    "jsx",
+    "mqtt",
+    "mongodb"
   ],
   "author": "Siewdass Sf",
-  "license": "MIT",
+  "licence": "MIT",
   "scripts": {
     "build": "npx webpack"
   },
