@@ -45,6 +45,9 @@ declare module 'riser' {
 declare module 'riser/interface' {
   export function Button( data: any )
   export function Input( data: any )
+  export function Box( data: any )
+  export function Row( data: any )
+  export function Column( data: any )
 }
 
 declare module 'riser/database' {

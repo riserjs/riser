@@ -2,6 +2,7 @@
 - Incoming events path listen on .view.tsx .gateway.ts file types declaration
 - No directory structure is required
 - No main file is required
+- Built on top of Mqtt and Mongodb
 - As a frontend is a single page application
 - As a backend is using message broker instead of http
 - Hot module reloading for frontend and backend
@@ -78,9 +79,9 @@ export class ExampleComponent {
 ```
 
 #### Layout
-- Box
-- Row
-- Column
+- Box container with alignments
+- Row container with vertical settings
+- Column container with horizontal settings
 
 ```tsx
 // example.component.tsx
@@ -262,9 +263,9 @@ export class ExampleGateway {
 ```
 
 #### Database
-- Schema
-- Field
-- Model
+- Schema class decorator to perform schema name 
+- Field decorator to set requeriments
+- Model class container for schema, can perform CRUD operations
 
 ```typescript
 // example.schema.ts
