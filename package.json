@@ -1,6 +1,6 @@
 {
   "name": "riser",
-  "version": "0.3.72",
+  "version": "0.3.73",
   "description": "A decentralized fullstack framework for realtime applications",
   "main": "index.js",
   "bin": "./dist/cli.js",
@@ -12,7 +12,7 @@
     "mongodb"
   ],
   "author": "Siewdass Sf",
-  "licence": "MIT",
+  "license": "MIT",
   "scripts": {
     "build": "npx webpack"
   },
