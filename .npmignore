@@ -1,8 +1,8 @@
 .gitignore
 .git
-src/
+src
 tsconfig.json
 webpack.config.js
 .eslintrc.json
-.vscode/
+.vscode
 LICENCE

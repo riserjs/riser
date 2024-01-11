@@ -1,13 +1,13 @@
-### A decentralized framework for develop frontend and or backend realtime applications
-- Incoming events path listen on .view.tsx .gateway.ts file types declaration
+### A decentralized fullstack framework for realtime applications
 - No directory structure is required
 - No main file is required
+- No public directory is required
+- No disk cache in development mode
 - Built on top of Mqtt and Mongodb
+- Incoming events path listen on .view.tsx .gateway.ts file types declaration
 - As a frontend is a single page application
 - As a backend is using message broker instead of http
 - Hot module reloading for frontend and backend
-- No public directory is required
-- No disk cache in development mode
 - Frontend and backend compiled isolated
 - Reactivity enabled for states and properties
 - Method auto binding
@@ -79,13 +79,13 @@ export class ExampleComponent {
 ```
 
 #### Layout
-- Box container with alignments
-- Row container with vertical settings
-- Column container with horizontal settings
+- Box horizontal and vertical container with basic alignment
+- Row vertical container and advanced alignment
+- Column horizontal container and advanced alignment
 
 ```tsx
 // example.component.tsx
-import { Box, Row, Column } from 'riser'
+import { Box, Row, Column } from 'riser/interface'
 
 @Component( )
 export class ExampleComponent {
@@ -213,6 +213,11 @@ import { Service } from 'riser'
 
 @Service( )
 export class ExampleService {
+  
+  run( ) {
+    Logger( 'ExampleService' )
+  }
+
 }
 
 // example.gateway.ts
@@ -224,6 +229,10 @@ export class ExampleGateway {
 
   @Inject( { type: 'service', name: 'ExampleService' } )
   service: ExampleService
+
+  onBoot( ) {
+    this.service.run( )
+  }
 
 }
 ```
@@ -262,10 +271,10 @@ export class ExampleGateway {
 }
 ```
 
-#### Database
-- Schema class decorator to perform schema name 
+#### Schema
+- Schema class decorator to set name and auto instance
 - Field decorator to set requeriments
-- Model class container for schema, can perform CRUD operations
+- Model class container for schema to perform CRUD operations
 
 ```typescript
 // example.schema.ts
@@ -279,6 +288,7 @@ export class ExampleSchema {
 
 }
 
+// example.gateway.ts
 import { Gateway, Logger } from 'riser'
 import { Model } from 'riser/database'
 import { ExampleSchema } from 'example.schema'
