@@ -39,9 +39,7 @@ export const gateway = ( path: string, target: any ) => new class extends target
 		{
 			for ( let i in this.__injection__ ) {
 				for ( let s in global.__services__ ) if ( i == s ) this[ this.__injection__[ i ] ] = global.__services__[ i ]
-			}
-			for ( let i in this.__schemas__ ) {
-				for ( let s in global.__schemas__ ) if ( i == s ) this[ i ] = global.__schemas__[ i ]
+				for ( let s in global.__schemas__ ) if ( i == s ) this[ this.__injection__[ i ] ] = global.__schemas__[ i ]
 			}
 		}
 

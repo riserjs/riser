@@ -1,5 +1,5 @@
 import * as mqtt from 'mqtt/dist/mqtt.min'
-console.log(mqtt)
+
 import { random, recursivelyRemove, getUrlParams } from '../utils'
 
 declare var config: any

@@ -309,7 +309,11 @@ if ( mode == 'development' ) {
 		bCompiler.watch( { }, ( err: any, stats: any ) => {
 			log( blogs, stats )
 			if ( ( global as any ).disconnect ) ( global as any ).disconnect( )
-			eval( bCompiler.outputFileSystem.readFileSync( `${bConfig.output.path}/main.js` ).toString( ) )
+			try {
+				eval( bCompiler.outputFileSystem.readFileSync( `${bConfig.output.path}/main.js` ).toString( ) )
+			} catch ( error ) {
+				console.log( error.message )
+			}
 		} )
 	}
 	

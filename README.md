@@ -358,3 +358,4 @@ module.exports = ( mode ) => {
 
 #### Future implementations
 - Style system
+- Font system

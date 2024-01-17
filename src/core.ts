@@ -63,6 +63,6 @@ export const Service = ( ) => ( target: any ) => { ( global.__services__ ??= {} 
 
 export const Storage = ( ) => ( target: any ) => { ( global.__storages__ ??= {} )[ target.name ] = storage( target ) }
 
-export const Inject = ( { type, name }: any ) => ( target: any, key: string ) => { ( target[ type == 'model' ? '__schemas__' : '__injection__' ] ??= {} )[ name ] = key }
+export const Inject = ( name: string ) => ( target: any, key: string ) => { ( target.__injection__ ??= {} )[ name ] = key }
 
 export const Observable = ( ) => ( target: any, key: string ) => { ( target.__observables__ ??= [] ).push( key ) }
